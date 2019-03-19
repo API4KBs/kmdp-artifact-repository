@@ -1,8 +1,8 @@
 package edu.mayo.kmdp.repository.artifact;
 
-import edu.mayo.kmdp.repository.server.KnowledgeArtifactApiDelegate;
-import edu.mayo.kmdp.repository.server.KnowledgeArtifactRepositoryApiDelegate;
-import edu.mayo.kmdp.repository.server.KnowledgeArtifactSeriesApiDelegate;
+import edu.mayo.kmdp.repository.artifact.server.KnowledgeArtifactApiDelegate;
+import edu.mayo.kmdp.repository.artifact.server.KnowledgeArtifactRepositoryApiDelegate;
+import edu.mayo.kmdp.repository.artifact.server.KnowledgeArtifactSeriesApiDelegate;
 
 public interface KnowledgeArtifactRepository extends KnowledgeArtifactRepositoryApiDelegate,
     KnowledgeArtifactSeriesApiDelegate,

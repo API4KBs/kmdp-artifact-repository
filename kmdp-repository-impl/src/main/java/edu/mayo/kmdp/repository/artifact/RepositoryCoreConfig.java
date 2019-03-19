@@ -1,6 +1,8 @@
 package edu.mayo.kmdp.repository.artifact;
 
-import edu.mayo.kmdp.repository.artifact.jcr.JcrRepositoryAdapter;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE;
+
+import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
 import java.io.File;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
@@ -20,19 +22,22 @@ public class RepositoryCoreConfig {
   @Bean
   @Profile("default")
   public KnowledgeArtifactRepository repository() throws Exception {
-    File dataDir = new File(ServerConfig.getConfigDir(), "repo-data");
-    dataDir.mkdir();
+    File dataDir = new File(
+        new KnowledgeArtifactRepositoryServerConfig().getTyped(BASE_NAMESPACE, File.class),
+        "repo-data");
 
     FileStore fs = FileStoreBuilder.fileStoreBuilder(dataDir).build();
     SegmentNodeStore ns = SegmentNodeStoreBuilders.builder(fs).build();
 
-    return new JcrRepositoryAdapter(new Jcr(new Oak(ns)).createRepository(), () -> fs.close());
+    return new JcrKnowledgeArtifactRepository(new Jcr(new Oak(ns)).createRepository(), fs::close,
+        new KnowledgeArtifactRepositoryServerConfig());
   }
 
   @Bean
   @Profile("inmemory")
   public KnowledgeArtifactRepository inMemoryRepository() throws Exception {
-    return new JcrRepositoryAdapter(new Jcr(new Oak()).createRepository());
+    return new JcrKnowledgeArtifactRepository(new Jcr(new Oak()).createRepository(),
+        new KnowledgeArtifactRepositoryServerConfig());
   }
 
 }

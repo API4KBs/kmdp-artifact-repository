@@ -1,13 +1,16 @@
 package edu.mayo.kmdp.repository.artifact.jcr;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.ResourceNotFoundException;
+import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.jcr.Node;
@@ -32,59 +35,80 @@ public class JcrDao {
 
   private Runnable cleanup;
 
-  private Runnable initFn;
+  private List<String> types;
+
 
   public JcrDao(javax.jcr.Repository delegate, List<String> types)
       throws IOException, InvalidFileStoreVersionException {
-    this(delegate, null, types);
+    this(delegate, null, types, new KnowledgeArtifactRepositoryServerConfig());
   }
 
-  public JcrDao(javax.jcr.Repository delegate, Runnable cleanup, List<String> types)
+  public JcrDao(javax.jcr.Repository delegate, List<String> types,
+      KnowledgeArtifactRepositoryServerConfig config)
       throws IOException, InvalidFileStoreVersionException {
+    this(delegate, null, types, config);
+  }
+
+  public JcrDao(javax.jcr.Repository delegate, Runnable cleanup, List<String> types,
+      KnowledgeArtifactRepositoryServerConfig config) {
     this.delegate = delegate;
     this.cleanup = cleanup;
 
-    this.initFn = () -> {
-      this.execute((Session session) -> {
+    this.types = new ArrayList<>(types);
+    init(config.getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID));
+  }
+
+  public void init(String repositoryId) {
+    try {
+      Session session = this.delegate.login(
+          new SimpleCredentials("admin", "admin".toCharArray()));
+      if (!Arrays.asList(session.getWorkspace().getAccessibleWorkspaceNames())
+          .contains(repositoryId)) {
+        session.getWorkspace().createWorkspace(repositoryId);
+        session.save();
+      }
+
+      this.execute(repositoryId, (Session sx) -> {
 
         try {
           for (String collection : types) {
-            if (!session.getRootNode().hasNode(collection)) {
-              session.getRootNode().addNode(collection);
+            if (!sx.getRootNode().hasNode(collection)) {
+              sx.getRootNode().addNode(collection);
             }
           }
 
-          session.save();
+          sx.save();
         } catch (RepositoryException e) {
           throw new RuntimeException(e);
         }
 
         return null;
       });
-    };
-
-    this.initFn.run();
+    } catch (RepositoryException re) {
+      re.printStackTrace();
+    }
   }
 
-  public <T> DaoResult<T> execute(Function<Session, T> f) {
+  public <T> DaoResult<T> execute(String repositoryId, Function<Session, T> f) {
     try {
       Session session = this.delegate.login(
-          new SimpleCredentials("admin", "admin".toCharArray()));
+          new SimpleCredentials("admin", "admin".toCharArray()), repositoryId);
 
       T result = f.apply(session);
 
       session.save();
 
-      return new DaoResult(result, session);
+      return new DaoResult<T>(result, session);
     } catch (RepositoryException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public DaoResult<Optional<List<Version>>> getResourceVersions(String resourceType, String id_) {
+  public DaoResult<List<Version>> getResourceVersions(String resourceType, String repositoryId,
+      String id_) {
     String id = Text.escapeIllegalJcrChars(id_);
 
-    return this.execute((Session session) -> {
+    return this.execute(repositoryId, (Session session) -> {
       try {
         if (session.getRootNode().getNode(resourceType).hasNode(id)) {
           Node resource = session.getRootNode().getNode(resourceType).getNode(id);
@@ -93,15 +117,15 @@ public class JcrDao {
 
           String[] versions = history.getVersionLabels();
 
-          return Optional.of(Arrays.stream(versions).map(label -> {
+          return Arrays.stream(versions).map(label -> {
             try {
               return history.getVersionByLabel(label);
             } catch (RepositoryException e) {
               throw new RuntimeException(e);
             }
-          }).collect(Collectors.toList()));
+          }).collect(Collectors.toList());
         } else {
-          return Optional.empty();
+          return Collections.emptyList();
         }
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -109,17 +133,16 @@ public class JcrDao {
     });
   }
 
-  public DaoResult<Version> getLatestResource(String resourceType, String id) {
+  public DaoResult<Version> getLatestResource(String resourceType, String repositoryId, String id) {
     // TODO: It seems like this should be easier to do in JCR...
-    DaoResult<Optional<List<Version>>> result = this.getResourceVersions(resourceType, id);
+    DaoResult<List<Version>> result = this.getResourceVersions(repositoryId, resourceType, id);
 
-    Optional<List<Version>> value = result.getValue();
+    List<Version> versions = result.getValue();
 
-    if (!value.isPresent()) {
+    if (versions.isEmpty()) {
       result.close();
       throw new ResourceNotFoundException(id);
     }
-    List<Version> versions = value.get();
 
     versions.sort((Version v1, Version v2) -> {
       try {
@@ -134,32 +157,31 @@ public class JcrDao {
       result.close();
       throw new ResourceNotFoundException(id);
     } else {
-      return new DaoResult(versions.get(0), result.getSession());
+      return new DaoResult<>(versions.get(0), result.getSession());
     }
   }
 
-  public DaoResult<Version> getResource(String resourceType, String id_, String version) {
+  public DaoResult<Version> getResource(String resourceType, String repositoryId, String id_,
+      String version) {
     String id = Text.escapeIllegalJcrChars(id_);
 
-    return this.execute((Session session) -> {
+    return this.execute(repositoryId, (Session session) -> {
       try {
         Node resource = session.getRootNode().getNode(resourceType).getNode(id);
         VersionHistory history = session.getWorkspace().getVersionManager()
             .getVersionHistory(resource.getPath());
 
-        Version versionNode = history.getVersionByLabel(version);
-
-        return versionNode;
+        return history.getVersionByLabel(version);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     });
   }
 
-  public DaoResult<List<Version>> getResources(String resourceType, Map<String, String> query) {
-    return this.execute((Session session) -> {
+  public DaoResult<List<Version>> getResources(String resourceType, String repositoryId,
+      Map<String, String> query) {
+    return this.execute(repositoryId, (Session session) -> {
       try {
-        String type = resourceType;
 
         String queryString;
         if (query.isEmpty()) {
@@ -171,11 +193,11 @@ public class JcrDao {
           queryString = "[" + q + "]";
         }
         QueryResult queryResult = session.getWorkspace().getQueryManager()
-            .createQuery(String.format("//%s/*%s", type, queryString), "xpath").execute();
+            .createQuery(String.format("//%s/*%s", resourceType, queryString), "xpath").execute();
 
         NodeIterator nodes = queryResult.getNodes();
 
-        List<Version> result = Lists.newArrayList();
+        List<Version> result = new ArrayList<>();
         while (nodes.hasNext()) {
           Node node = nodes.nextNode();
 
@@ -190,10 +212,10 @@ public class JcrDao {
 
   }
 
-  public void deleteResource(String resourceType, String id_) {
+  public void deleteResource(String resourceType, String repositoryId, String id_) {
     String id = Text.escapeIllegalJcrChars(id_);
 
-    try (DaoResult<?> _ = this.execute((Session session) -> {
+    try (DaoResult<?> ignored = this.execute(repositoryId, (Session session) -> {
       try {
         Node resource = session.getRootNode().getNode(resourceType).getNode(id);
         VersionHistory history = session.getWorkspace().getVersionManager()
@@ -211,14 +233,13 @@ public class JcrDao {
 
       return null;
     })) {
-      return;
     }
   }
 
-  public void deleteResource(String resourceType, String id_, String version) {
+  public void deleteResource(String resourceType, String repositoryId, String id_, String version) {
     String id = Text.escapeIllegalJcrChars(id_);
 
-    try (DaoResult<?> _ = this.execute((Session session) -> {
+    this.execute(repositoryId, (Session session) -> {
       try {
         Node resource = session.getRootNode().getNode(resourceType).getNode(id);
         VersionHistory history = session.getWorkspace().getVersionManager()
@@ -230,23 +251,20 @@ public class JcrDao {
       }
 
       return null;
-    })) {
-      return;
-    }
+    });
   }
 
-  public void saveResource(String resourceType, String id, String version, byte[] payload) {
-    try (DaoResult<Version> _ = this
-        .saveResource(resourceType, id, version, payload, Maps.newHashMap())) {
-      return;
-    }
+  public void saveResource(String resourceType, String repositoryId, String id, String version,
+      byte[] payload) {
+    saveResource(resourceType, repositoryId, id, version, payload, new HashMap<>());
   }
 
-  public DaoResult<Version> saveResource(String resourceType, String id_, String version,
+  public DaoResult<Version> saveResource(String resourceType, String repositoryId, String id_,
+      String version,
       byte[] payload, Map<String, String> metadata) {
     String id = Text.escapeIllegalJcrChars(id_);
 
-    return this.execute((Session session) -> {
+    return this.execute(repositoryId, (Session session) -> {
       try {
         VersionManager versionManager = session.getWorkspace().getVersionManager();
 
@@ -265,9 +283,9 @@ public class JcrDao {
 
         node.setProperty(JCR_DATA, new BinaryImpl(payload));
         if (metadata != null) {
-          metadata.entrySet().forEach(entry -> {
+          metadata.forEach((key, value) -> {
             try {
-              node.setProperty("jcr:" + entry.getKey(), entry.getValue());
+              node.setProperty("jcr:" + key, value);
             } catch (RepositoryException e) {
               throw new RuntimeException(e);
             }
@@ -285,8 +303,22 @@ public class JcrDao {
     });
   }
 
-  public void reset() {
-    this.execute((session -> {
+  public boolean isEmpty(String repositoryId) {
+    this.execute(repositoryId, (session) -> {
+      try {
+        session.getRootNode().getNodes();
+
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      return false;
+    });
+    return false;
+  }
+
+  public void reset(String repositoryId) {
+    this.execute(repositoryId, (session) -> {
       try {
         NodeIterator itr = session.getRootNode().getNodes();
 
@@ -301,13 +333,36 @@ public class JcrDao {
       }
 
       return null;
-    }));
+    });
 
-    this.initFn.run();
+    this.init(repositoryId);
   }
 
   protected void shutdown() {
     this.cleanup.run();
   }
 
+  public static class DaoResult<T> implements Closeable {
+
+    private T value;
+    private Session session;
+
+    DaoResult(T value, Session session) {
+      this.value = value;
+      this.session = session;
+    }
+
+    @Override
+    public void close() {
+      this.session.logout();
+    }
+
+    public T getValue() {
+      return value;
+    }
+
+    public Session getSession() {
+      return session;
+    }
+  }
 }
