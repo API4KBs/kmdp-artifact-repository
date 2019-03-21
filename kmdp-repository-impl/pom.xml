@@ -14,30 +14,31 @@
   <artifactId>kmdp-repository-impl</artifactId>
 
   <properties>
-    <junit.version>5.2.0</junit.version>
-    <junit.platform.version>1.2.0</junit.platform.version>
-    <oak.version>1.6.1</oak.version>
+    <junit.version>5.4.0</junit.version>
+    <junit.platform.version>1.4.0</junit.platform.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
-      <artifactId>oak-jcr</artifactId>
-      <version>${oak.version}</version>
+      <artifactId>jackrabbit-core</artifactId>
+      <version>2.2.8</version>
     </dependency>
-
     <dependency>
-      <groupId>org.apache.jackrabbit</groupId>
-      <artifactId>oak-segment-tar</artifactId>
-      <version>${oak.version}</version>
+      <groupId>javax.jcr</groupId>
+      <artifactId>jcr</artifactId>
+      <version>2.0</version>
     </dependency>
-
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
       <version>${junit.version}</version>
-      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit.version}</version>
     </dependency>
 
   </dependencies>
@@ -52,13 +53,8 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.21.0</version>
+        <version>2.22.0</version>
         <dependencies>
-          <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-surefire-provider</artifactId>
-            <version>${junit.platform.version}</version>
-          </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>

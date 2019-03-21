@@ -1,10 +1,12 @@
 package edu.mayo.kmdp.repository.artifact.jcr;
 
+import static javax.jcr.nodetype.NodeType.MIX_VERSIONABLE;
+
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.ResourceNotFoundException;
+import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository.JcrTypes;
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,8 +24,6 @@ import javax.jcr.query.QueryResult;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
-import org.apache.jackrabbit.oak.plugins.version.VersionConstants;
-import org.apache.jackrabbit.oak.segment.file.InvalidFileStoreVersionException;
 import org.apache.jackrabbit.util.Text;
 import org.apache.jackrabbit.value.BinaryImpl;
 
@@ -38,14 +38,12 @@ public class JcrDao {
   private List<String> types;
 
 
-  public JcrDao(javax.jcr.Repository delegate, List<String> types)
-      throws IOException, InvalidFileStoreVersionException {
+  public JcrDao(javax.jcr.Repository delegate, List<String> types) {
     this(delegate, null, types, new KnowledgeArtifactRepositoryServerConfig());
   }
 
   public JcrDao(javax.jcr.Repository delegate, List<String> types,
-      KnowledgeArtifactRepositoryServerConfig config)
-      throws IOException, InvalidFileStoreVersionException {
+      KnowledgeArtifactRepositoryServerConfig config) {
     this(delegate, null, types, config);
   }
 
@@ -135,7 +133,7 @@ public class JcrDao {
 
   public DaoResult<Version> getLatestResource(String resourceType, String repositoryId, String id) {
     // TODO: It seems like this should be easier to do in JCR...
-    DaoResult<List<Version>> result = this.getResourceVersions(repositoryId, resourceType, id);
+    DaoResult<List<Version>> result = this.getResourceVersions(resourceType, repositoryId, id);
 
     List<Version> versions = result.getValue();
 
@@ -193,7 +191,8 @@ public class JcrDao {
           queryString = "[" + q + "]";
         }
         QueryResult queryResult = session.getWorkspace().getQueryManager()
-            .createQuery(String.format("//%s/*%s", resourceType, queryString), "xpath").execute();
+            .createQuery(String.format("//%s/*%s", resourceType, queryString), "xpath")
+            .execute();
 
         NodeIterator nodes = queryResult.getNodes();
 
@@ -277,7 +276,7 @@ public class JcrDao {
 
         } else {
           node = assetNode.addNode(id);
-          node.addMixin(VersionConstants.MIX_VERSIONABLE);
+          node.addMixin(MIX_VERSIONABLE);
           node.setProperty("jcr:id", id);
         }
 
@@ -304,17 +303,19 @@ public class JcrDao {
   }
 
   public boolean isEmpty(String repositoryId) {
-    this.execute(repositoryId, (session) -> {
-      try {
-        session.getRootNode().getNodes();
-
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-
-      return false;
-    });
-    return false;
+    DaoResult<Boolean> result = this.execute(repositoryId, (session) -> Arrays.stream(JcrTypes.values())
+        .anyMatch((resourceType) -> {
+              try {
+                NodeIterator it = session.getRootNode().getNode(resourceType.name()).getNodes();
+                boolean x = it.hasNext();
+                int i = (int) it.getSize();
+                return !it.hasNext();
+              } catch (RepositoryException re) {
+                return false;
+              }
+            }
+        ));
+    return result.value;
   }
 
   public void reset(String repositoryId) {

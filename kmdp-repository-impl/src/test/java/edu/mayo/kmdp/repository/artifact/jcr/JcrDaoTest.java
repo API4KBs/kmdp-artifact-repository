@@ -3,9 +3,11 @@ package edu.mayo.kmdp.repository.artifact.jcr;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.ResourceNotFoundException;
 import edu.mayo.kmdp.util.FileUtil;
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -13,25 +15,43 @@ import java.util.Map;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
-import org.apache.jackrabbit.oak.Oak;
-import org.apache.jackrabbit.oak.jcr.Jcr;
-import org.apache.jackrabbit.oak.segment.file.InvalidFileStoreVersionException;
-import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
+import org.apache.jackrabbit.core.TransientRepository;
+import org.apache.jackrabbit.core.config.ConfigurationException;
+import org.apache.jackrabbit.core.config.RepositoryConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class JcrDaoTest {
 
-  String TYPE_NAME = JcrKnowledgeArtifactRepository.JcrTypes.ARTIFACT.name();
+  @TempDir
+  Path tempDir;
+
+  private String TYPE_NAME = JcrKnowledgeArtifactRepository.JcrTypes.KNOWLEDGE_ARTIFACT.name();
 
   private JcrDao dao;
+  private Repository repo;
 
   @BeforeEach
-  void dao() throws IOException, InvalidFileStoreVersionException {
-    Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
+  void repo() throws ConfigurationException {
+    RepositoryConfig jcrConfig = RepositoryConfig.create(
+        JcrKnowledgeArtifactRepositoryTest.class.getResourceAsStream("/test-repository.xml"),
+        tempDir.toString());
 
-    dao = new JcrDao(jcr, Collections.singletonList(TYPE_NAME));
-    dao.init("1");
+    KnowledgeArtifactRepositoryServerConfig cfg =
+        new KnowledgeArtifactRepositoryServerConfig().with(
+            KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID, "1");
+
+    repo = new TransientRepository(jcrConfig);
+
+    dao = new JcrDao(repo, Collections.singletonList(TYPE_NAME), cfg);
+  }
+
+  @AfterEach
+  void cleanup() {
+    TransientRepository jackrabbit = (TransientRepository) repo;
+    jackrabbit.shutdown();
   }
 
   @Test
@@ -44,7 +64,7 @@ class JcrDaoTest {
   }
 
   @Test
-  void testLoadAndGetVersion() throws IOException, InvalidFileStoreVersionException {
+  void testLoadAndGetVersion() {
     dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
     dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
 
@@ -56,7 +76,7 @@ class JcrDaoTest {
   }
 
   @Test
-  void testLoadAndGetVersions() throws IOException, InvalidFileStoreVersionException {
+  void testLoadAndGetVersions() {
     dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
     dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
 
@@ -66,7 +86,7 @@ class JcrDaoTest {
   }
 
   @Test
-  void testLoadAndGetLatestVersion() throws IOException, InvalidFileStoreVersionException {
+  void testLoadAndGetLatestVersion() {
     dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
     dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
 
@@ -76,21 +96,21 @@ class JcrDaoTest {
   }
 
   @Test
-  void testLoadAndGetLatestVersionNone() throws IOException, InvalidFileStoreVersionException {
+  void testLoadAndGetLatestVersionNone() {
     dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
     dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
 
     assertThrows(
         ResourceNotFoundException.class,
-        () -> dao.getLatestResource(TYPE_NAME, "1", "12345").getValue());
+        () -> dao.getLatestResource(TYPE_NAME, "1", "12345"));
   }
 
   @Test
-  void testDelete() throws IOException, InvalidFileStoreVersionException {
+  void testDelete() {
     dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
     dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
 
-    dao.deleteResource(TYPE_NAME, "1", "new1");
+    dao.deleteResource(TYPE_NAME, "1","1", "new1");
 
     List<Version> versions = dao.getResourceVersions(TYPE_NAME, "1", "1").getValue();
 
@@ -98,7 +118,7 @@ class JcrDaoTest {
   }
 
   @Test
-  void testQuery() throws IOException, InvalidFileStoreVersionException {
+  void testQuery() {
     dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes(), m("type", "foobar"));
     dao.saveResource(TYPE_NAME, "1", "1", "new1.1", "hi1.1".getBytes(), m("type", "foo"));
 

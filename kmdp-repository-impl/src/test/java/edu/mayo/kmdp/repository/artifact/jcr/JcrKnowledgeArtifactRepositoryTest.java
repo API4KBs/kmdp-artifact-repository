@@ -5,39 +5,55 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.jcr.Repository;
-import org.apache.jackrabbit.oak.Oak;
-import org.apache.jackrabbit.oak.jcr.Jcr;
-import org.apache.jackrabbit.oak.segment.file.InvalidFileStoreVersionException;
-import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
+import org.apache.jackrabbit.core.TransientRepository;
+import org.apache.jackrabbit.core.config.ConfigurationException;
+import org.apache.jackrabbit.core.config.RepositoryConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.omg.spec.api4kp._1_0.identifiers.Pointer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 class JcrKnowledgeArtifactRepositoryTest {
 
-  private String TYPE_NAME = JcrKnowledgeArtifactRepository.JcrTypes.ARTIFACT.name();
+  @TempDir
+  Path tempDir;
+
+  private String TYPE_NAME = JcrKnowledgeArtifactRepository.JcrTypes.KNOWLEDGE_ARTIFACT.name();
 
   private JcrKnowledgeArtifactRepository adapter;
   private JcrDao dao;
+  private Repository repo;
 
   @BeforeEach
-  void repo() throws IOException, InvalidFileStoreVersionException {
+  void repo() throws ConfigurationException {
+    RepositoryConfig jcrConfig = RepositoryConfig.create(
+        JcrKnowledgeArtifactRepositoryTest.class.getResourceAsStream("/test-repository.xml"),
+        tempDir.toString());
+
     KnowledgeArtifactRepositoryServerConfig cfg =
         new KnowledgeArtifactRepositoryServerConfig().with(
             KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID, "1");
-    Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
 
-    dao = new JcrDao(jcr, Collections.singletonList(TYPE_NAME), cfg);
+    repo = new TransientRepository(jcrConfig);
+
+    dao = new JcrDao(repo, Collections.singletonList(TYPE_NAME), cfg);
 
     adapter = new JcrKnowledgeArtifactRepository(dao, cfg);
+  }
+
+  @AfterEach
+  void cleanup() {
+    TransientRepository jackrabbit = (TransientRepository) repo;
+    jackrabbit.shutdown();
   }
 
   @Test
@@ -68,7 +84,7 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/default/artifacts/1/versions/new",
+    assertEquals("http://localhost:8080/repos/1/artifacts/1/versions/new",
         result.get(0).getHref().toString());
   }
 
@@ -81,7 +97,7 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/default/artifacts/1/versions/new2",
+    assertEquals("http://localhost:8080/repos/1/artifacts/1/versions/new2",
         result.get(0).getHref().toString());
   }
 
@@ -137,8 +153,8 @@ class JcrKnowledgeArtifactRepositoryTest {
     Set<String> resultSet = result.stream().map(it -> it.getHref().toString())
         .collect(Collectors.toSet());
 
-    assertTrue(resultSet.contains("http://localhost:8080/repos/default/artifacts/2/versions/new2"));
-    assertTrue(resultSet.contains("http://localhost:8080/repos/default/artifacts/1/versions/new2"));
+    assertTrue(resultSet.contains("http://localhost:8080/repos/1/artifacts/2/versions/new2"));
+    assertTrue(resultSet.contains("http://localhost:8080/repos/1/artifacts/1/versions/new2"));
   }
 
 }
