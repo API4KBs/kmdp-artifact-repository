@@ -10,14 +10,14 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>kmdp-repository</artifactId>
+  <artifactId>kmdp-artifact-repository</artifactId>
   <version>1.0-SNAPSHOT</version>
 
   <packaging>pom</packaging>
 
   <modules>
-    <module>kmdp-repository-impl</module>
-    <module>kmdp-repository-test</module>
+    <module>kmdp-artifact-repository-impl</module>
+    <module>kmdp-artifact-repository-test</module>
   </modules>
 
 </project>
