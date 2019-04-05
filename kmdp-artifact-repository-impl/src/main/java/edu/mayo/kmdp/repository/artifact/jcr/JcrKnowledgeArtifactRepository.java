@@ -313,7 +313,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
       String artifactId = version.getFrozenNode().getProperty("jcr:id").getString();
       String label = version.getContainingHistory().getVersionLabels(version)[0];
 
-      Pointer pointer = new edu.mayo.kmdp.common.model.Pointer();
+      Pointer pointer = new org.omg.spec.api4kp._1_0.identifiers.resources.Pointer();
       pointer.setHref(this.hrefBuilder.getArtifactHref(artifactId, label));
 
       URIIdentifier id = DatatypeHelper
