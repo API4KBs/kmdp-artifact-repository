@@ -16,7 +16,7 @@
 package edu.mayo.kmdp.repository.artifact;
 
 import edu.mayo.kmdp.ConfigProperties;
-import edu.mayo.kmdp.xslt.XSLTOptions;
+import edu.mayo.kmdp.xslt.XSLTConfig.XSLTOptions;
 import java.util.Properties;
 
 
