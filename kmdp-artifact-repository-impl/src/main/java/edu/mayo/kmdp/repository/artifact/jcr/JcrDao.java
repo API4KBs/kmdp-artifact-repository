@@ -17,7 +17,7 @@ package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static javax.jcr.nodetype.NodeType.MIX_VERSIONABLE;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.ResourceNotFoundException;
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository.JcrTypes;

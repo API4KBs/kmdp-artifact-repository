@@ -15,7 +15,7 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE;
 
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
 import java.io.File;

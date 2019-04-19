@@ -27,13 +27,14 @@ public class HrefBuilder {
   public HrefBuilder(KnowledgeArtifactRepositoryServerConfig cfg) {
     this.cfg = cfg;
     this.host = StringUtils
-        .removeEnd(cfg.getTyped(KnowledgeArtifactRepositoryOptions.SERVER_HOST).toString(), "/");
+        .removeEnd(cfg.getTyped(
+            KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.SERVER_HOST).toString(), "/");
   }
 
   public URI getArtifactHref(String artifactId,
       String versionTag) {
     return URI.create(URIPathHelper.knowledgeArtifactLocation(this.host,
-        cfg.getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID), artifactId,
+        cfg.getTyped(KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID), artifactId,
         versionTag));
   }
 
