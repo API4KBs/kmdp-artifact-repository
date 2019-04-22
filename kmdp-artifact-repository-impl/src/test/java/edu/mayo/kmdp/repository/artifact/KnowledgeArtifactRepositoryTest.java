@@ -20,21 +20,18 @@ import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServe
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.SERVER_HOST;
+import static edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository.transientRepository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import edu.mayo.kmdp.repository.artifact.jcr.JcrDao;
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import org.apache.jackrabbit.api.JackrabbitRepository;
-import org.apache.jackrabbit.core.TransientRepository;
 import org.apache.jackrabbit.core.config.ConfigurationException;
-import org.apache.jackrabbit.core.config.RepositoryConfig;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -49,7 +46,6 @@ class KnowledgeArtifactRepositoryTest {
   @TempDir
   static Path tempDir;
 
-  private static JackrabbitRepository jack;
   private static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepository repo;
 
   private static KnowledgeArtifactRepositoryServerConfig cfg =
@@ -58,21 +54,21 @@ class KnowledgeArtifactRepositoryTest {
           .with(DEFAULT_REPOSITORY_ID, "TestRepo");
 
   @BeforeAll
-  static void repo() throws ConfigurationException {
-    RepositoryConfig jcrConfig = RepositoryConfig.create(
-        KnowledgeArtifactRepositoryTest.class.getResourceAsStream("/test-repository.xml"),
-        tempDir.toString());
-
-    jack = new TransientRepository(jcrConfig);
-    JcrDao dao = new JcrDao(jack, Collections
-        .singletonList(JcrKnowledgeArtifactRepository.JcrTypes.KNOWLEDGE_ARTIFACT.name()), cfg);
-
-    repo = new JcrKnowledgeArtifactRepository(dao, cfg);
+  static void repo() {
+    try {
+      repo = transientRepository("/test-repository.xml",
+          tempDir.toString(),
+          cfg
+      );
+    } catch (ConfigurationException e) {
+      e.printStackTrace();
+      fail(e.getMessage());
+    }
   }
 
   @AfterAll
   static void cleanup() {
-    TransientRepository jackrabbit = (TransientRepository) jack;
+    JcrKnowledgeArtifactRepository jackrabbit = (JcrKnowledgeArtifactRepository) repo;
     jackrabbit.shutdown();
   }
 

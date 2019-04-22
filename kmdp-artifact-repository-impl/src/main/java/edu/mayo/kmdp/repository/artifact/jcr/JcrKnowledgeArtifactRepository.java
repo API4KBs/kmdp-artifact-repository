@@ -15,13 +15,16 @@
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
+import static edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository.JcrTypes.KNOWLEDGE_ARTIFACT;
+
 import edu.mayo.kmdp.id.helper.DatatypeHelper;
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.util.Util;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.jcr.version.Version;
 import org.apache.commons.io.IOUtils;
+import org.apache.jackrabbit.core.TransientRepository;
+import org.apache.jackrabbit.core.config.ConfigurationException;
+import org.apache.jackrabbit.core.config.RepositoryConfig;
 import org.omg.spec.api4kp._1_0.PlatformComponentHelper;
 import org.omg.spec.api4kp._1_0.identifiers.Pointer;
 import org.omg.spec.api4kp._1_0.identifiers.URIIdentifier;
@@ -71,6 +77,22 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   //* Constructors */
   //*********************************************************************************************/
 
+  public static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepository transientRepository(
+      String configFile, String folderPath, KnowledgeArtifactRepositoryServerConfig cfg)
+      throws ConfigurationException {
+
+    TransientRepository transientRepo = new TransientRepository(RepositoryConfig.create(
+        JcrKnowledgeArtifactRepository.class.getResourceAsStream(configFile),
+        folderPath));
+
+    return new JcrKnowledgeArtifactRepository(
+        new JcrDao(transientRepo,
+            transientRepo::shutdown,
+            Collections.singletonList(KNOWLEDGE_ARTIFACT.name()),
+            cfg),
+        cfg);
+  }
+
   public JcrKnowledgeArtifactRepository(javax.jcr.Repository delegate,
       KnowledgeArtifactRepositoryServerConfig cfg) {
     this(delegate, null, cfg);
@@ -109,6 +131,10 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
         repositoryName,
         cfg.getTyped(KnowledgeArtifactRepositoryOptions.SERVER_HOST)
     );
+  }
+
+  public void shutdown() {
+    dao.shutdown();
   }
 
   //*********************************************************************************************/
@@ -202,7 +228,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     String versionId = UUID.randomUUID().toString();
 
     try (JcrDao.DaoResult<Version> ignored = this.dao
-        .saveResource(JcrTypes.KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionId, document, params)) {
+        .saveResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionId, document, params)) {
       return new ResponseEntity<>(HttpStatus.OK);
     }
   }
@@ -210,7 +236,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public ResponseEntity<Void> deleteKnowledgeArtifactSeries(String repositoryId,
       String artifactId) {
-    this.dao.deleteResource(JcrTypes.KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId);
+    this.dao.deleteResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId);
 
     return new ResponseEntity<>(HttpStatus.OK);
   }
@@ -218,7 +244,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public ResponseEntity<Void> deleteKnowledgeArtifactVersion(String repositoryId, String artifactId,
       String versionTag) {
-    this.dao.deleteResource(JcrTypes.KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag);
+    this.dao.deleteResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag);
 
     return new ResponseEntity<>(HttpStatus.OK);
   }
@@ -234,7 +260,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
       String artifactId, Integer offset, Integer limit, String beforeTag, String afterTag,
       String sort) {
     try (JcrDao.DaoResult<List<Version>> result = this.dao
-        .getResourceVersions(JcrTypes.KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId)) {
+        .getResourceVersions(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId)) {
       List<Version> versions = result.getValue();
 
       return versions.isEmpty()
@@ -254,7 +280,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   public ResponseEntity<byte[]> getKnowledgeArtifactVersion(String repositoryId, String artifactId,
       String versionTag) {
     try (JcrDao.DaoResult<Version> result = this.dao
-        .getResource(JcrTypes.KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag)) {
+        .getResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag)) {
       Version version = result.getValue();
       byte[] bytes = this.getDataFromNode(version);
 
@@ -288,7 +314,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   public ResponseEntity<List<Pointer>> listKnowledgeArtifacts(String repositoryId, Integer offset,
       Integer limit) {
     try (JcrDao.DaoResult<List<Version>> result = this.dao
-        .getResources(JcrTypes.KNOWLEDGE_ARTIFACT.name(), repositoryId, new HashMap<>())) {
+        .getResources(KNOWLEDGE_ARTIFACT.name(), repositoryId, new HashMap<>())) {
       List<Version> versions = result.getValue();
 
       List<Pointer> pointers = versions.stream()
@@ -306,7 +332,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     Map<String, String> params = new HashMap<>();
 
     try (JcrDao.DaoResult<Version> ignored = this.dao
-        .saveResource(JcrTypes.KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag, document, params)) {
+        .saveResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag, document, params)) {
 
       return new ResponseEntity<>(HttpStatus.OK);
     }

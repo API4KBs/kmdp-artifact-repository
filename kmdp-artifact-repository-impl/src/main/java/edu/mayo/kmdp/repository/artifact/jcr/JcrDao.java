@@ -355,7 +355,9 @@ public class JcrDao {
   }
 
   protected void shutdown() {
-    this.cleanup.run();
+    if (this.cleanup !=null) {
+      this.cleanup.run();
+    }
   }
 
   public static class DaoResult<T> implements Closeable {
