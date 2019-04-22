@@ -15,12 +15,31 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.mayo.kmdp.repository.artifact.server.KnowledgeArtifactApiDelegate;
 import edu.mayo.kmdp.repository.artifact.server.KnowledgeArtifactRepositoryApiDelegate;
 import edu.mayo.kmdp.repository.artifact.server.KnowledgeArtifactSeriesApiDelegate;
+import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 
 public interface KnowledgeArtifactRepository extends KnowledgeArtifactRepositoryApiDelegate,
     KnowledgeArtifactSeriesApiDelegate,
     KnowledgeArtifactApiDelegate {
 
+  @Override
+  default Optional<String> getAcceptHeader() {
+    return KnowledgeArtifactApiDelegate.super.getAcceptHeader();
+  }
+
+  @Override
+  default Optional<ObjectMapper> getObjectMapper() {
+    return KnowledgeArtifactApiDelegate.super.getObjectMapper();
+  }
+
+  @Override
+  default Optional<HttpServletRequest> getRequest() {
+    return KnowledgeArtifactApiDelegate.super.getRequest();
+  }
 }
+
+

@@ -13,11 +13,6 @@
 
   <artifactId>kmdp-artifact-repository-impl</artifactId>
 
-  <properties>
-    <junit.version>5.4.0</junit.version>
-    <junit.platform.version>1.4.0</junit.platform.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
@@ -36,9 +31,8 @@
       <version>${junit.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.version}</version>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-commons</artifactId>
     </dependency>
 
   </dependencies>
