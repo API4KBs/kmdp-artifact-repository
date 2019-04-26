@@ -15,23 +15,11 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
-import static edu.mayo.kmdp.id.helper.DatatypeHelper.uri;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.SERVER_HOST;
-import static edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository.transientRepository;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
+import edu.mayo.kmdp.repository.artifact.jcr.JcrDao;
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.UUID;
-import org.apache.jackrabbit.core.config.ConfigurationException;
+import org.apache.jackrabbit.oak.Oak;
+import org.apache.jackrabbit.oak.jcr.Jcr;
+import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -41,7 +29,20 @@ import org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import javax.jcr.Repository;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
+import static edu.mayo.kmdp.id.helper.DatatypeHelper.uri;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 class KnowledgeArtifactRepositoryTest {
+
+  private static String TYPE_NAME = JcrKnowledgeArtifactRepository.JcrTypes.KNOWLEDGE_ARTIFACT.name();
 
   @TempDir
   static Path tempDir;
@@ -55,15 +56,10 @@ class KnowledgeArtifactRepositoryTest {
 
   @BeforeAll
   static void repo() {
-    try {
-      repo = transientRepository("/test-repository.xml",
-          tempDir.toString(),
-          cfg
-      );
-    } catch (ConfigurationException e) {
-      e.printStackTrace();
-      fail(e.getMessage());
-    }
+    Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
+
+    JcrDao dao = new JcrDao(jcr, Collections.singletonList(TYPE_NAME));
+    repo = new JcrKnowledgeArtifactRepository(dao,cfg);
   }
 
   @AfterAll

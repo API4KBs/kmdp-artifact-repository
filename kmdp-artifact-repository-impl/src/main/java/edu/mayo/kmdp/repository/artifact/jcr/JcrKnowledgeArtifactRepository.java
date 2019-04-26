@@ -34,9 +34,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.jcr.version.Version;
 import org.apache.commons.io.IOUtils;
-import org.apache.jackrabbit.core.TransientRepository;
-import org.apache.jackrabbit.core.config.ConfigurationException;
-import org.apache.jackrabbit.core.config.RepositoryConfig;
 import org.omg.spec.api4kp._1_0.PlatformComponentHelper;
 import org.omg.spec.api4kp._1_0.identifiers.Pointer;
 import org.omg.spec.api4kp._1_0.identifiers.URIIdentifier;
@@ -77,21 +74,6 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   //* Constructors */
   //*********************************************************************************************/
 
-  public static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepository transientRepository(
-      String configFile, String folderPath, KnowledgeArtifactRepositoryServerConfig cfg)
-      throws ConfigurationException {
-
-    TransientRepository transientRepo = new TransientRepository(RepositoryConfig.create(
-        JcrKnowledgeArtifactRepository.class.getResourceAsStream(configFile),
-        folderPath));
-
-    return new JcrKnowledgeArtifactRepository(
-        new JcrDao(transientRepo,
-            transientRepo::shutdown,
-            Collections.singletonList(KNOWLEDGE_ARTIFACT.name()),
-            cfg),
-        cfg);
-  }
 
   public JcrKnowledgeArtifactRepository(javax.jcr.Repository delegate,
       KnowledgeArtifactRepositoryServerConfig cfg) {

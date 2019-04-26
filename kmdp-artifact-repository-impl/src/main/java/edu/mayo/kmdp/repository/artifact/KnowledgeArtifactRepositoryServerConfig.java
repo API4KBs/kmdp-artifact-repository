@@ -19,7 +19,6 @@ import edu.mayo.kmdp.ConfigProperties;
 import edu.mayo.kmdp.Opt;
 import edu.mayo.kmdp.Option;
 import edu.mayo.kmdp.util.Util;
-import edu.mayo.kmdp.xslt.XSLTConfig.XSLTOptions;
 import java.io.File;
 import java.net.URL;
 import java.util.Properties;
@@ -28,7 +27,7 @@ import java.util.Properties;
 public class KnowledgeArtifactRepositoryServerConfig extends
     ConfigProperties<KnowledgeArtifactRepositoryServerConfig, KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions> {
 
-  private static final Properties defaults = defaulted(XSLTOptions.class);
+  private static final Properties defaults = defaulted(KnowledgeArtifactRepositoryOptions.class);
 
   public KnowledgeArtifactRepositoryServerConfig() {
     super(defaults);

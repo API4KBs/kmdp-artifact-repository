@@ -75,11 +75,13 @@ public class JcrDao {
     try {
       Session session = this.delegate.login(
           new SimpleCredentials("admin", "admin".toCharArray()));
-      if (!Arrays.asList(session.getWorkspace().getAccessibleWorkspaceNames())
-          .contains(repositoryId)) {
-        session.getWorkspace().createWorkspace(repositoryId);
-        session.save();
-      }
+
+      // Oak does not supported federated workspaces - initialization would cause a NotSupportedException
+//      if (!Arrays.asList(session.getWorkspace().getAccessibleWorkspaceNames())
+//          .contains(repositoryId)) {
+//        session.getWorkspace().createWorkspace(repositoryId);
+//        session.save();
+//      }
 
       this.execute(repositoryId, (Session sx) -> {
 
@@ -105,7 +107,10 @@ public class JcrDao {
   public <T> DaoResult<T> execute(String repositoryId, Function<Session, T> f) {
     try {
       Session session = this.delegate.login(
-          new SimpleCredentials("admin", "admin".toCharArray()), repositoryId);
+          new SimpleCredentials("admin", "admin".toCharArray())
+              // Oak does not supported federated workspaces - individual repo access would cause a NotSupportedException
+//              , repositoryId
+      );
 
       T result = f.apply(session);
 
@@ -322,8 +327,6 @@ public class JcrDao {
         .anyMatch((resourceType) -> {
               try {
                 NodeIterator it = session.getRootNode().getNode(resourceType.name()).getNodes();
-                boolean x = it.hasNext();
-                int i = (int) it.getSize();
                 return !it.hasNext();
               } catch (RepositoryException re) {
                 return false;
