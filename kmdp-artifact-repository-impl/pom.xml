@@ -100,7 +100,7 @@
                 <property name="password" value="${deploy.password}"/>
                 <property name="host" value="${deploy.host}"/>
                 <property name="path" value="${deploy.path}"/>
-                <scp todir="${password}:${username}@${host}:${path}" trust="true">
+                <scp todir="${username}:${password}@${host}:${path}" trust="true">
                   <fileset dir="target">
                     <include name="**/*.war"/>
                   </fileset>
