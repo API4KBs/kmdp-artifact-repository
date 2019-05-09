@@ -88,7 +88,40 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <phase>deploy</phase>
+            <configuration>
+              <tasks>
+                <scp todir="${password}:${username}@${deploy.host}:${deploy.path}">
+                  <fileset dir="target">
+                    <include name="**/*.war"/>
+                  </fileset>
+                </scp>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
   </build>
 
 </project>
