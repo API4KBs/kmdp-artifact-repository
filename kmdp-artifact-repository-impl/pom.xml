@@ -96,10 +96,10 @@
             <phase>deploy</phase>
             <configuration>
               <target>
-                <property name="username" value="${deploy.username}"/>
-                <property name="password" value="${deploy.password}"/>
-                <property name="host" value="${deploy.host}"/>
-                <property name="path" value="${deploy.path}"/>
+                <property name="username" value="${env.deploy.username}"/>
+                <property name="password" value="${env.deploy.password}"/>
+                <property name="host" value="${env.deploy.host}"/>
+                <property name="path" value="${env.deploy.path}"/>
                 <scp todir="${password}:${username}@${host}:${path}">
                   <fileset dir="target">
                     <include name="**/*.war"/>
