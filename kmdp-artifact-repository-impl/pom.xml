@@ -100,14 +100,12 @@
                 <property name="password" value="${deploy.password}"/>
                 <property name="host" value="${deploy.host}"/>
                 <property name="path" value="${deploy.path}"/>
-              </target>
-              <tasks>
                 <scp todir="${password}:${username}@${host}:${path}">
                   <fileset dir="target">
                     <include name="**/*.war"/>
                   </fileset>
                 </scp>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
