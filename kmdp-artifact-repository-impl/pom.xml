@@ -13,44 +13,29 @@
 
   <artifactId>kmdp-artifact-repository-impl</artifactId>
 
-  <properties>
-    <oak.version>1.12.0</oak.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
       <artifactId>oak-jcr</artifactId>
-      <version>${oak.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-          </exclusion>
-        </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
       <artifactId>oak-segment-tar</artifactId>
-      <version>${oak.version}</version>
     </dependency>
     <dependency>
       <groupId>javax.jcr</groupId>
       <artifactId>jcr</artifactId>
-      <version>2.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>3.0.2</version>
     </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.version}</version>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
@@ -66,23 +51,8 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
 
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.0</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
-        <version>3.2.2</version>
         <configuration>
           <attachClasses>true</attachClasses>
         </configuration>
