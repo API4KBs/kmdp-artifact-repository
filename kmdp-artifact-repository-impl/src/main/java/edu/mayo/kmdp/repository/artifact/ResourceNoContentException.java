@@ -17,11 +17,11 @@ package edu.mayo.kmdp.repository.artifact;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus (code = HttpStatus.NOT_FOUND)
-public class ResourceNotFoundException extends RuntimeException {
+@ResponseStatus (code = HttpStatus.NO_CONTENT)
+public class ResourceNoContentException extends RuntimeException {
 
-  public ResourceNotFoundException() {
-    super("Repository or Artifact Version not found");
+  public ResourceNoContentException(String message) {
+    super(message);
   }
 
 }

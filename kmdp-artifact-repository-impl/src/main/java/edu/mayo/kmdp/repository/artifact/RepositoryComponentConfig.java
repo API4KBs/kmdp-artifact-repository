@@ -15,11 +15,9 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE;
 
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
 import java.io.File;
-import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
 import org.apache.jackrabbit.oak.segment.SegmentNodeStore;
@@ -44,7 +42,7 @@ public class RepositoryComponentConfig {
     if(! dataDir.exists()) {
       boolean dirCreationSuccess = dataDir.mkdir();
       if (!dirCreationSuccess) {
-        // TODO ? Blow up?
+        throw new RuntimeException();
       }
     }
 

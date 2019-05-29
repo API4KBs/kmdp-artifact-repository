@@ -32,10 +32,26 @@ public class HrefBuilder {
   }
 
   public URI getArtifactHref(String artifactId,
-      String versionTag) {
+      String versionTag, String repositoryId) {
     return URI.create(URIPathHelper.knowledgeArtifactLocation(this.host,
-        cfg.getTyped(KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID), artifactId,
+            repositoryId, artifactId,
         versionTag));
+  }
+
+  public URI getSeriesHref(String artifactId, String repositoryId) {
+    return URI.create(knowledgeArtifactSeriesLocation(this.host,
+            repositoryId, artifactId));
+  }
+
+  public static String knowledgeArtifactSeriesLocation(String host, String repositoryId,
+                                                 String artifactId) {
+    return String
+            .format("%s%s", host, knowledgeArtifactSeriesPath(repositoryId, artifactId));
+  }
+
+  public static String knowledgeArtifactSeriesPath(String repositoryId, String artifactId) {
+    return String
+            .format("/repos/%s/artifacts/%s", repositoryId, artifactId);
   }
 
 }

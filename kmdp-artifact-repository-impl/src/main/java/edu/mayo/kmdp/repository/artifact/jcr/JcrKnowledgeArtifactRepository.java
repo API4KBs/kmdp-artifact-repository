@@ -15,32 +15,22 @@
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
-import static edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository.JcrTypes.KNOWLEDGE_ARTIFACT;
-
 import edu.mayo.kmdp.id.helper.DatatypeHelper;
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
-import edu.mayo.kmdp.util.Util;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.jcr.Node;
 import javax.jcr.version.Version;
 import org.apache.commons.io.IOUtils;
 import org.omg.spec.api4kp._1_0.PlatformComponentHelper;
 import org.omg.spec.api4kp._1_0.identifiers.Pointer;
 import org.omg.spec.api4kp._1_0.identifiers.URIIdentifier;
-import org.omg.spec.api4kp._1_0.identifiers.VersionIdentifier;
 import org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -51,20 +41,6 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
   private KnowledgeArtifactRepositoryServerConfig cfg;
   private HrefBuilder hrefBuilder;
-
-  public enum JcrTypes {
-    KNOWLEDGE_ARTIFACT(byte[].class);
-
-    private final Class type;
-
-    JcrTypes(final Class type) {
-      this.type = type;
-    }
-
-    public Class getType() {
-      return type;
-    }
-  }
 
   public JcrDao dao;
 
@@ -92,7 +68,6 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
       KnowledgeArtifactRepositoryServerConfig cfg) {
     this(new JcrDao(delegate,
         cleanup,
-        Arrays.stream(JcrTypes.values()).map(Enum::name).collect(Collectors.toList()),
         cfg), cfg);
   }
 
@@ -125,199 +100,179 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
   @Override
   public ResponseEntity<List<KnowledgeArtifactRepository>> listKnowledgeArtifactRepositories() {
-    return new ResponseEntity<>(new ArrayList<>(descriptors.values()),HttpStatus.OK);
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 
   @Override
-  public ResponseEntity<Void> initKnowledgeArtifactRepository(KnowledgeArtifactRepository descr) {
-    VersionIdentifier vid = DatatypeHelper.toVersionIdentifier(descr.getId());
-    return enableRepository(vid != null ? vid.getTag() : null, descr);
+  public ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> initKnowledgeArtifactRepository() {
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 
   @Override
-  public ResponseEntity<Void> setKnowledgeArtifactRepository(String repositoryId,
+  public ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> setKnowledgeArtifactRepository(String repositoryId,
       KnowledgeArtifactRepository repositoryDescr) {
-    return enableRepository(repositoryId, repositoryDescr);
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 
   @Override
   public ResponseEntity<Void> isKnowledgeArtifactRepository(String repositoryId) {
-    return isKnowledgeArtifactRepositoryEnabled(repositoryId)
-        ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
-        : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 
   @Override
   public ResponseEntity<KnowledgeArtifactRepository> getKnowledgeArtifactRepository(
       String repositoryId) {
-    return isKnowledgeArtifactRepositoryEnabled(repositoryId)
-        ? new ResponseEntity<>(descriptors.get(repositoryId), HttpStatus.OK)
-        : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 
   @Override
-  public ResponseEntity<Void> deleteKnowledgeArtifactRepository(String repositoryId) {
-    if (isKnowledgeArtifactRepositoryEnabled(repositoryId)) {
-      if (! isDefaultRepository(repositoryId) && dao.isEmpty(repositoryId)) {
-        return disableRepository(repositoryId);
-      } else {
-        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-      }
-    }
-    return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<Void> disableKnowledgeArtifactRepository(String repositoryId) {
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 
-  private boolean isDefaultRepository(String repositoryId) {
-    return cfg.getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID)
-        .equals(repositoryId);
-  }
-
-
-  protected boolean isKnowledgeArtifactRepositoryEnabled(String repositoryId) {
-    return descriptors.containsKey(repositoryId);
-  }
-
-  protected ResponseEntity<Void> disableRepository(String repositoryId) {
-    descriptors.remove(repositoryId);
-    return new ResponseEntity<>(HttpStatus.OK);
-  }
-
-  protected ResponseEntity<Void> enableRepository(String repositoryId,
-      KnowledgeArtifactRepository repositoryDescr) {
-    if (Util.isEmpty(repositoryId) || repositoryDescr == null || repositoryDescr.getId() == null) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-    if (isKnowledgeArtifactRepositoryEnabled(repositoryId)) {
-      descriptors.put(repositoryId, repositoryDescr);
-      return new ResponseEntity<>(HttpStatus.OK);
-    } else {
-      descriptors.put(repositoryId, repositoryDescr);
-      dao.init(repositoryId);
-      return new ResponseEntity<>(HttpStatus.CREATED);
-    }
-  }
-
-
-
-
-  /*********************************************************************************************/
+  //*********************************************************************************************/
+  //* Knowledge Artifact Series - Management APIs */
+  //*********************************************************************************************/
 
   @Override
-  public ResponseEntity<Void> addKnowledgeArtifactVersion(String repositoryId, String artifactId,
-      byte[] document) {
-    Map<String, String> params = new HashMap<>();
+  public ResponseEntity<List<Pointer>> listKnowledgeArtifacts(String  repositoryId, Integer  offset, Integer  limit, Boolean  deleted) {
+    try (JcrDao.DaoResult<List<Node>> result = this.dao
+            .getResources(repositoryId, deleted, new HashMap<>())) {
+      List<Node> nodes = result.getValue();
 
-    String versionId = UUID.randomUUID().toString();
-
-    try (JcrDao.DaoResult<Version> ignored = this.dao
-        .saveResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionId, document, params)) {
-      return new ResponseEntity<>(HttpStatus.OK);
-    }
-  }
-
-  @Override
-  public ResponseEntity<Void> deleteKnowledgeArtifactSeries(String repositoryId,
-      String artifactId) {
-    this.dao.deleteResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId);
-
-    return new ResponseEntity<>(HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<Void> deleteKnowledgeArtifactVersion(String repositoryId, String artifactId,
-      String versionTag) {
-    this.dao.deleteResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag);
-
-    return new ResponseEntity<>(HttpStatus.OK);
-  }
-
-
-  @Override
-  public ResponseEntity<byte[]> getLatestKnowledgeArtifact(String repositoryId, String artifactId) {
-    return null;
-  }
-
-  @Override
-  public ResponseEntity<List<Pointer>> getKnowledgeArtifactSeries(String repositoryId,
-      String artifactId, Integer offset, Integer limit, String beforeTag, String afterTag,
-      String sort) {
-    try (JcrDao.DaoResult<List<Version>> result = this.dao
-        .getResourceVersions(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId)) {
-      List<Version> versions = result.getValue();
-
-      return versions.isEmpty()
-          ? ResponseEntity.notFound().build()
-          : this.wrap(versions.stream()
-              .map(this::versionToPointer)
-              .collect(Collectors.toList()));
-    }
-  }
-
-  @Override
-  public ResponseEntity<Void> setKnowledgeArtifactSeries(String repositoryId, String artifactId) {
-    return null;
-  }
-
-  @Override
-  public ResponseEntity<byte[]> getKnowledgeArtifactVersion(String repositoryId, String artifactId,
-      String versionTag) {
-    try (JcrDao.DaoResult<Version> result = this.dao
-        .getResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag)) {
-      Version version = result.getValue();
-      byte[] bytes = this.getDataFromNode(version);
-
-      // TODO: set mime type
-      HttpHeaders headers = new HttpHeaders();
-
-      return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
-    }
-  }
-
-
-  @Override
-  public ResponseEntity<Void> initKnowledgeArtifactSeries(String repositoryId) {
-    return null;
-  }
-
-
-  @Override
-  public ResponseEntity<Void> isKnowledgeArtifactSeries(String repositoryId, String artifactId) {
-    return null;
-  }
-
-  @Override
-  public ResponseEntity<Void> isKnowledgeArtifactVersion(String repositoryId, String artifactId,
-      String versionTag) {
-    return null;
-  }
-
-
-  @Override
-  public ResponseEntity<List<Pointer>> listKnowledgeArtifacts(String repositoryId, Integer offset,
-      Integer limit) {
-    try (JcrDao.DaoResult<List<Version>> result = this.dao
-        .getResources(KNOWLEDGE_ARTIFACT.name(), repositoryId, new HashMap<>())) {
-      List<Version> versions = result.getValue();
-
-      List<Pointer> pointers = versions.stream()
-          .map(this::versionToPointer)
-          .collect(Collectors.toList());
+      List<Pointer> pointers = nodes.stream()
+              .map(node -> artifactToPointer(node, repositoryId))
+              .collect(Collectors.toList());
 
       return this.wrap(pointers);
     }
   }
 
+  @Override
+  public ResponseEntity<UUID> initKnowledgeArtifact(String repositoryId) {
+    UUID artifactId = UUID.randomUUID();
+
+    try (JcrDao.DaoResult<Node> ignored = this.dao
+            .saveResource(repositoryId, artifactId)) {
+      return new ResponseEntity<>(artifactId, HttpStatus.CREATED);
+    }
+  }
 
   @Override
-  public ResponseEntity<Void> setKnowledgeArtifactVersion(String repositoryId, String artifactId,
-      String versionTag, byte[] document) {
+  public ResponseEntity<Void> clearKnowledgeRepository( String  repositoryId,
+                                                        Boolean  deleted) {
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+  }
+
+  @Override
+  public ResponseEntity<byte[]> getLatestKnowledgeArtifact(String  repositoryId, UUID  artifactId, Boolean  deleted) {
+    try (JcrDao.DaoResult<Version> result = this.dao
+            .getLatestResource(repositoryId, artifactId, deleted)) {
+      Version version = result.getValue();
+      return this.wrap(this.getDataFromNode(version));
+    }
+  }
+
+  @Override
+  public ResponseEntity<Void> isKnowledgeArtifactSeries(String  repositoryId, UUID  artifactId, Boolean  deleted) {
+    try (JcrDao.DaoResult<List<Version>> ignored = this.dao
+            .getResourceVersions(repositoryId, artifactId, deleted)) {
+      return new ResponseEntity<>(HttpStatus.OK);
+    }
+  }
+
+  @Override
+  public ResponseEntity<Void> enableKnowledgeArtifact( String  repositoryId,
+                                                        UUID  artifactId) {
+    this.dao.enableResource(repositoryId, artifactId);
+    return new ResponseEntity<>(HttpStatus.CREATED);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteKnowledgeArtifact(String  repositoryId, UUID  artifactId, Boolean  deleted ) {
+    if(deleted){
+      return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    }
+    this.dao.deleteResource(repositoryId, artifactId);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<List<Pointer>> getKnowledgeArtifactSeries(String  repositoryId, UUID  artifactId, Boolean  deleted, Integer  offset, Integer  limit,
+                                                                  String  beforeTag, String  afterTag, String  sort) {
+    try (JcrDao.DaoResult<List<Version>> result = this.dao
+            .getResourceVersions(repositoryId, artifactId, deleted)) {
+      List<Version> versions = result.getValue();
+
+      return versions.isEmpty()
+              ? this.wrap(Collections.emptyList())
+              : this.wrap(versions.stream()
+              .map(version -> versionToPointer(version, repositoryId))
+              .collect(Collectors.toList()));
+    }
+  }
+
+  @Override
+  public ResponseEntity<Void> addKnowledgeArtifactVersion(String repositoryId, UUID artifactId, byte[] document) {
+    //TODO success should return location of new version
+    Map<String, String> params = new HashMap<>();
+
+    String versionId = UUID.randomUUID().toString();
+    try (JcrDao.DaoResult<Version> ignored = this.dao
+        .saveResource(repositoryId, artifactId, versionId, document, params)) {
+      return new ResponseEntity<>(HttpStatus.OK);
+    }
+  }
+
+  //*********************************************************************************************/
+  //* Knowledge Artifact - Management APIs */
+  //*********************************************************************************************/
+
+  @Override
+  public ResponseEntity<byte[]> getKnowledgeArtifactVersion(String  repositoryId, UUID  artifactId, String  versionTag, Boolean  deleted) {
+    try (JcrDao.DaoResult<Version> result = this.dao
+            .getResource(repositoryId, artifactId, versionTag, deleted)) {
+      Version version = result.getValue();
+
+      return this.wrap(this.getDataFromNode(version));
+
+      // TODO: set mime type
+    }
+  }
+
+  @Override
+  public ResponseEntity<Void> isKnowledgeArtifactVersion(String  repositoryId, UUID  artifactId, String  versionTag, Boolean  deleted) {
+    try (JcrDao.DaoResult<Version> ignored = this.dao
+            .getResource(repositoryId, artifactId, versionTag, deleted)) {
+      return new ResponseEntity<>(HttpStatus.OK);
+    }
+  }
+
+  public ResponseEntity<Void> enableKnowledgeArtifactVersion( String  repositoryId, UUID  artifactId, String  versionTag, Boolean  deleted) {
+    this.dao.enableResource(repositoryId, artifactId, versionTag);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> setKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
+                                                          String versionTag, byte[] document) {
     Map<String, String> params = new HashMap<>();
 
     try (JcrDao.DaoResult<Version> ignored = this.dao
-        .saveResource(KNOWLEDGE_ARTIFACT.name(), repositoryId, artifactId, versionTag, document, params)) {
+        .saveResource(repositoryId, artifactId, versionTag, document, params)) {
 
-      return new ResponseEntity<>(HttpStatus.OK);
+      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteKnowledgeArtifactVersion(String  repositoryId, UUID  artifactId, String  versionTag, Boolean  deleted) {
+    if(deleted){
+      return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    }
+    this.dao.deleteResource(repositoryId, artifactId, versionTag);
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
 
@@ -331,16 +286,32 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   }
 
 
-  private Pointer versionToPointer(Version version) {
+  private Pointer versionToPointer(Version version, String repositoryId) {
     try {
       String artifactId = version.getFrozenNode().getProperty("jcr:id").getString();
       String label = version.getContainingHistory().getVersionLabels(version)[0];
 
       Pointer pointer = new org.omg.spec.api4kp._1_0.identifiers.resources.Pointer();
-      pointer.setHref(this.hrefBuilder.getArtifactHref(artifactId, label));
+      pointer.setHref(this.hrefBuilder.getArtifactHref(artifactId, label, repositoryId));
 
       URIIdentifier id = DatatypeHelper
           .uri(cfg.getTyped(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE), artifactId, label);
+      pointer.setEntityRef(id);
+
+      return pointer;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  private Pointer artifactToPointer(Node node, String repositoryId) {
+    try {
+      String artifactId = node.getProperty("jcr:id").getString();
+
+      Pointer pointer = new org.omg.spec.api4kp._1_0.identifiers.resources.Pointer();
+      pointer.setHref(this.hrefBuilder.getSeriesHref(artifactId, repositoryId));
+
+      URIIdentifier id = DatatypeHelper
+              .uri("UUID:"+artifactId);
       pointer.setEntityRef(id);
 
       return pointer;

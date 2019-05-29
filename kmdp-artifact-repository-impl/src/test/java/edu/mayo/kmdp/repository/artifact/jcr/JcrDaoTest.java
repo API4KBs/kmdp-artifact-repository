@@ -27,14 +27,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -43,10 +41,11 @@ class JcrDaoTest {
 
   @TempDir
   Path tempDir;
-
-  private String TYPE_NAME = JcrKnowledgeArtifactRepository.JcrTypes.KNOWLEDGE_ARTIFACT.name();
-
+  
   private JcrDao dao;
+
+  private UUID artifactUUID;
+  private UUID artifactUUID2;
 
   @BeforeEach
   void repo() {
@@ -56,7 +55,9 @@ class JcrDaoTest {
 
     Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
 
-    dao = new JcrDao(jcr, Collections.singletonList(TYPE_NAME),cfg);
+    dao = new JcrDao(jcr, cfg);
+    artifactUUID = UUID.randomUUID();
+    artifactUUID2 = UUID.randomUUID();
 }
 
   @AfterEach
@@ -66,20 +67,29 @@ class JcrDaoTest {
 
   @Test
   void testLoadAndGet() {
-    dao.saveResource(TYPE_NAME, "1", "1", "new", "hi!".getBytes());
+    dao.saveResource("1", artifactUUID, "new", "hi!".getBytes());
 
-    Version result = dao.getResource(TYPE_NAME, "1", "1", "new").getValue();
+    Version result = dao.getResource("1", artifactUUID, "new", false).getValue();
 
     assertEquals("hi!", d(result));
   }
 
   @Test
-  void testLoadAndGetVersion() {
-    dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
-    dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
+  void testLoadAndGetHasAvailableStatus () throws Exception {
+    dao.saveResource("1", artifactUUID, "new", "hi!".getBytes());
 
-    Version result1 = dao.getResource(TYPE_NAME, "1", "1", "new1").getValue();
-    Version result2 = dao.getResource(TYPE_NAME, "1", "1", "new2").getValue();
+    Node result = dao.getResource("1", artifactUUID, "new", false).getValue().getFrozenNode();
+
+    assertEquals("available", result.getProperty("status").getString());
+  }
+
+  @Test
+  void testLoadAndGetVersion() {
+    dao.saveResource("1", artifactUUID, "new1", "hi1".getBytes());
+    dao.saveResource("1", artifactUUID, "new2", "hi2".getBytes());
+
+    Version result1 = dao.getResource("1", artifactUUID, "new1", false).getValue();
+    Version result2 = dao.getResource("1", artifactUUID, "new2", false).getValue();
 
     assertEquals("hi1", d(result1));
     assertEquals("hi2", d(result2));
@@ -87,58 +97,77 @@ class JcrDaoTest {
 
   @Test
   void testLoadAndGetVersions() {
-    dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
-    dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
+    dao.saveResource("1", artifactUUID, "new1", "hi1".getBytes());
+    dao.saveResource("1", artifactUUID, "new2", "hi2".getBytes());
 
-    List<Version> versions = dao.getResourceVersions(TYPE_NAME, "1", "1").getValue();
+    List<Version> versions = dao.getResourceVersions("1", artifactUUID, false).getValue();
 
     assertEquals(2, versions.size());
   }
 
   @Test
   void testLoadAndGetLatestVersion() {
-    dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
-    dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
+    dao.saveResource("1", artifactUUID, "new1", "hi1".getBytes());
+    dao.saveResource("1", artifactUUID, "new2", "hi2".getBytes());
 
-    Version version = dao.getLatestResource(TYPE_NAME, "1", "1").getValue();
+    Version version = dao.getLatestResource("1", artifactUUID, false).getValue();
 
     assertEquals("hi2", d(version));
   }
 
   @Test
   void testLoadAndGetLatestVersionNone() {
-    dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
-    dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
+    dao.saveResource("1", artifactUUID, "new1", "hi1".getBytes());
+    dao.saveResource("1", artifactUUID, "new2", "hi2".getBytes());
 
     assertThrows(
         ResourceNotFoundException.class,
-        () -> dao.getLatestResource(TYPE_NAME, "1", "12345"));
+        () -> dao.getLatestResource("1", artifactUUID2, false));
   }
 
   @Test
-  void testDelete() {
-    dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes());
-    dao.saveResource(TYPE_NAME, "1", "1", "new2", "hi2".getBytes());
+  void testDeleteTagsVersionUnavailable() throws Exception {
+    dao.saveResource("1", artifactUUID, "new1", "hi1".getBytes());
+    dao.saveResource("1", artifactUUID, "new2", "hi2".getBytes());
 
-    dao.deleteResource(TYPE_NAME, "1","1", "new1");
+    dao.deleteResource("1",artifactUUID, "new1");
 
-    List<Version> versions = dao.getResourceVersions(TYPE_NAME, "1", "1").getValue();
+    Node version = dao.getResource("1", artifactUUID, "new1", true).getValue().getFrozenNode();
+    Node version2 = dao.getResource("1", artifactUUID, "new2", true).getValue().getFrozenNode();
 
-    assertEquals(1, versions.size());
+    assertEquals("unavailable", version.getProperty("status").getString());
+    assertEquals("available", version2.getProperty("status").getString());
+  }
+
+  @Test
+  void testDeleteTagsArtifactsAndVersionsUnavailable() throws Exception {
+    dao.saveResource("1", artifactUUID, "new1", "hi1".getBytes());
+    dao.saveResource("1", artifactUUID, "new2", "hi2".getBytes());
+    dao.saveResource("1", artifactUUID, "new3", "hi2".getBytes());
+    dao.saveResource("1", artifactUUID, "new4", "hi2".getBytes());
+
+
+    dao.deleteResource("1",artifactUUID);
+
+    Node version = dao.getResource("1", artifactUUID, "new1", true).getValue().getFrozenNode();
+    Node version2 = dao.getResource("1", artifactUUID, "new2", true).getValue().getFrozenNode();
+
+    assertEquals("unavailable", version.getProperty("status").getString());
+    assertEquals("unavailable", version2.getProperty("status").getString());
   }
 
   @Test
   void testQuery() {
-    dao.saveResource(TYPE_NAME, "1", "1", "new1", "hi1".getBytes(), m("type", "foobar"));
-    dao.saveResource(TYPE_NAME, "1", "1", "new1.1", "hi1.1".getBytes(), m("type", "foo"));
+    dao.saveResource("default", artifactUUID, "new1", "hi1".getBytes(), m("type", "foobar"));
+    dao.saveResource("default", artifactUUID, "new1.1", "hi1.1".getBytes(), m("type", "foo"));
 
-    dao.saveResource(TYPE_NAME, "1", "2", "new2", "hi2".getBytes(), m("type", "foobar"));
-    dao.saveResource(TYPE_NAME, "1", "2", "new2.1", "hi2.1".getBytes(), m("type", "foo"));
+    dao.saveResource("default", artifactUUID2, "new2", "hi2".getBytes(), m("type", "foobar"));
+    dao.saveResource("default", artifactUUID2, "new2.1", "hi2.1".getBytes(), m("type", "foo"));
 
     Map<String, String> query = new HashMap<>();
     query.put("type", "foo");
 
-    List<Version> resources = dao.getResources(TYPE_NAME, "1", query).getValue();
+    List<Node> resources = dao.getResources("default", false, query).getValue();
 
     assertEquals(2, resources.size());
   }

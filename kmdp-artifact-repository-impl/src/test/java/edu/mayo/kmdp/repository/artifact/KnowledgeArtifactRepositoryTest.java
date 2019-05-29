@@ -42,8 +42,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class KnowledgeArtifactRepositoryTest {
 
-  private static String TYPE_NAME = JcrKnowledgeArtifactRepository.JcrTypes.KNOWLEDGE_ARTIFACT.name();
-
   @TempDir
   static Path tempDir;
 
@@ -54,11 +52,16 @@ class KnowledgeArtifactRepositoryTest {
           .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
           .with(DEFAULT_REPOSITORY_ID, "TestRepo");
 
+  private static KnowledgeArtifactRepositoryServerConfig cfg2 =
+          new KnowledgeArtifactRepositoryServerConfig()
+                  .with(DEFAULT_REPOSITORY_NAME, "TestRepository2")
+                  .with(DEFAULT_REPOSITORY_ID, "TestRepo2");
+
   @BeforeAll
   static void repo() {
     Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
 
-    JcrDao dao = new JcrDao(jcr, Collections.singletonList(TYPE_NAME));
+    JcrDao dao = new JcrDao(jcr);
     repo = new JcrKnowledgeArtifactRepository(dao,cfg);
   }
 
@@ -72,161 +75,169 @@ class KnowledgeArtifactRepositoryTest {
   void testListRepositoryWithDefault() {
     ResponseEntity<List<KnowledgeArtifactRepository>> ans = repo
         .listKnowledgeArtifactRepositories();
-    assertEquals(HttpStatus.OK, ans.getStatusCode());
-    assertEquals(1, ans.getBody().size());
-
-    KnowledgeArtifactRepository descr = ans.getBody().get(0);
-    assertEquals(URI.create(cfg.getTyped(BASE_NAMESPACE) +
-            "/repos/" +
-            cfg.getTyped(DEFAULT_REPOSITORY_ID)),
-        descr.getId().getUri());
-    assertEquals(URI.create(cfg.getTyped(SERVER_HOST) +
-            "/repos/" +
-            cfg.getTyped(DEFAULT_REPOSITORY_ID)),
-        descr.getHref());
-    assertEquals(cfg.getTyped(DEFAULT_REPOSITORY_NAME),
-        descr.getName());
-    assertTrue(descr.getAlias() != null && descr.getAlias()
-        .contains(uri("uri:uuid:" + cfg.getTyped(DEFAULT_REPOSITORY_ID))));
-    assertNotNull(descr.getInstanceId());
+    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
   }
 
   @Test
-  void testGetDefaultRepositoryDescriptor() {
-    ResponseEntity<KnowledgeArtifactRepository> ans = repo
-        .getKnowledgeArtifactRepository(cfg.getTyped(DEFAULT_REPOSITORY_ID));
-    assertEquals(HttpStatus.OK, ans.getStatusCode());
-    KnowledgeArtifactRepository descr = ans.getBody();
-    assertNotNull(descr);
+  void testSetRepositoryWithDefault() {
+    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+            .setKnowledgeArtifactRepository("repository", new KnowledgeArtifactRepository());
+    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
   }
 
   @Test
-  void testExistsDefaultRepository() {
+  void testInitRepositoryWithDefault() {
+    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+            .initKnowledgeArtifactRepository();
+    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
+  }
+
+  @Test
+  void testIsRepositoryWithDefault() {
     ResponseEntity<Void> ans = repo
-        .isKnowledgeArtifactRepository(cfg.getTyped(DEFAULT_REPOSITORY_ID));
-    assertEquals(HttpStatus.NO_CONTENT, ans.getStatusCode());
+            .isKnowledgeArtifactRepository("repository");
+    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
   }
 
   @Test
-  void testCantDeleteDefaultRepository() {
+  void testGetRepositoryWithDefault() {
+    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+            .getKnowledgeArtifactRepository("repository");
+    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
+  }
+  @Test
+  void testDisableRepositoryWithDefault() {
     ResponseEntity<Void> ans = repo
-        .deleteKnowledgeArtifactRepository(cfg.getTyped(DEFAULT_REPOSITORY_ID));
-    assertEquals(HttpStatus.FORBIDDEN, ans.getStatusCode());
+            .disableKnowledgeArtifactRepository("repository");
+    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
   }
 
 
-  @Test
-  void testNonExistingRepository() {
-    ResponseEntity<Void> ans = repo
-        .isKnowledgeArtifactRepository("non-existing-"+Math.random());
-    assertEquals(HttpStatus.NOT_FOUND, ans.getStatusCode());
-  }
+//  @Test
+//  void testGetDefaultRepositoryDescriptor() {
+//    ResponseEntity<KnowledgeArtifactRepository> ans = repo
+//        .getKnowledgeArtifactRepository(cfg.getTyped(DEFAULT_REPOSITORY_ID));
+//    assertEquals(HttpStatus.OK, ans.getStatusCode());
+//    KnowledgeArtifactRepository descr = ans.getBody();
+//    assertNotNull(descr);
+//  }
+//
+//  @Test
+//  void testExistsDefaultRepository() {
+//    ResponseEntity<Void> ans = repo
+//        .isKnowledgeArtifactRepository(cfg.getTyped(DEFAULT_REPOSITORY_ID));
+//    assertEquals(HttpStatus.NO_CONTENT, ans.getStatusCode());
+//  }
+//
+//
+//  @Test
+//  void testNonExistingRepository() {
+//    ResponseEntity<Void> ans = repo
+//        .isKnowledgeArtifactRepository("non-existing-"+Math.random());
+//    assertEquals(HttpStatus.NOT_FOUND, ans.getStatusCode());
+//  }
+//
+//  @Test
+//  void testGetNonExistingRepositoryDescriptor() {
+//    ResponseEntity<KnowledgeArtifactRepository> ans = repo
+//        .getKnowledgeArtifactRepository("non-existing-"+Math.random());
+//    assertEquals(HttpStatus.NOT_FOUND, ans.getStatusCode());
+//  }
 
-  @Test
-  void testGetNonExistingRepositoryDescriptor() {
-    ResponseEntity<KnowledgeArtifactRepository> ans = repo
-        .getKnowledgeArtifactRepository("non-existing-"+Math.random());
-    assertEquals(HttpStatus.NOT_FOUND, ans.getStatusCode());
-  }
+//  @Test
+//  void testInitRepository() {
+//    UUID id = UUID.randomUUID();
+//    KnowledgeArtifactRepository descr = PlatformComponentHelper
+//        .repositoryDescr(cfg.getTyped(BASE_NAMESPACE),
+//            id.toString(), "non-standard repository", cfg.getTyped(SERVER_HOST))
+//        .orElse(null);
+//    assertNotNull(descr);
+//    ResponseEntity<Void> ans = repo.initKnowledgeArtifactRepository(descr);
+//    assertEquals(HttpStatus.CREATED, ans.getStatusCode());
+//
+//    ResponseEntity<Void> ans2 = repo.deleteKnowledgeArtifactRepository(descr.getId().getTag());
+//    assertEquals(HttpStatus.OK, ans2.getStatusCode());
+//  }
 
-  @Test
-  void testInitRepository() {
-    UUID id = UUID.randomUUID();
-    KnowledgeArtifactRepository descr = PlatformComponentHelper
-        .repositoryDescr(cfg.getTyped(BASE_NAMESPACE),
-            id.toString(), "non-standard repository", cfg.getTyped(SERVER_HOST))
-        .orElse(null);
-    assertNotNull(descr);
-    ResponseEntity<Void> ans = repo.initKnowledgeArtifactRepository(descr);
-    assertEquals(HttpStatus.CREATED, ans.getStatusCode());
+//  @Test
+//  void testInitRepositoryWithoutLegalId() {
+//    UUID id = UUID.randomUUID();
+//    KnowledgeArtifactRepository descr = PlatformComponentHelper
+//        .repositoryDescr(cfg.getTyped(BASE_NAMESPACE),
+//            id.toString(), "non-standard repository", cfg.getTyped(SERVER_HOST))
+//        .orElse(null);
+//    assertNotNull(descr);
+//
+//    descr.setId(null);
+//    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo.initKnowledgeArtifactRepository();
+//    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR,ans.getStatusCode());
+//  }
 
-    ResponseEntity<Void> ans2 = repo.deleteKnowledgeArtifactRepository(descr.getId().getTag());
-    assertEquals(HttpStatus.OK, ans2.getStatusCode());
-  }
+//  @Test
+//  void testGetCustomRepository() {
+//    UUID id = UUID.randomUUID();
+//    KnowledgeArtifactRepository init = PlatformComponentHelper
+//        .repositoryDescr(cfg.getTyped(BASE_NAMESPACE),
+//            id.toString(), "non-standard repository", cfg.getTyped(SERVER_HOST))
+//        .orElse(null);
+//    assertNotNull(init);
+//    ResponseEntity<Void> ans = repo.initKnowledgeArtifactRepository(init);
+//    assertEquals(HttpStatus.CREATED, ans.getStatusCode());
+//
+//    ResponseEntity<KnowledgeArtifactRepository> ans2 = repo.getKnowledgeArtifactRepository(id.toString());
+//
+//    KnowledgeArtifactRepository descr = ans2.getBody();
+//    assertEquals(URI.create(cfg.getTyped(BASE_NAMESPACE) +
+//            "/repos/" +
+//            id.toString()),
+//        descr.getId().getUri());
+//    assertEquals(URI.create(cfg.getTyped(SERVER_HOST) +
+//            "/repos/" +
+//            id.toString()),
+//        descr.getHref());
+//    assertEquals("non-standard repository",
+//        descr.getName());
+//    assertTrue(descr.getAlias() != null && descr.getAlias()
+//        .contains(uri("uri:uuid:" + id.toString())));
+//    assertNotNull(descr.getInstanceId());
+//
+//    ResponseEntity<Void> ans3 = repo.deleteKnowledgeArtifactRepository(descr.getId().getTag());
+//    assertEquals(HttpStatus.OK, ans3.getStatusCode());
+//  }
 
-  @Test
-  void testInitRepositoryWithoutLegalId() {
-    UUID id = UUID.randomUUID();
-    KnowledgeArtifactRepository descr = PlatformComponentHelper
-        .repositoryDescr(cfg.getTyped(BASE_NAMESPACE),
-            id.toString(), "non-standard repository", cfg.getTyped(SERVER_HOST))
-        .orElse(null);
-    assertNotNull(descr);
-
-    descr.setId(null);
-    ResponseEntity<Void> ans = repo.initKnowledgeArtifactRepository(descr);
-    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR,ans.getStatusCode());
-  }
-
-  @Test
-  void testGetCustomRepository() {
-    UUID id = UUID.randomUUID();
-    KnowledgeArtifactRepository init = PlatformComponentHelper
-        .repositoryDescr(cfg.getTyped(BASE_NAMESPACE),
-            id.toString(), "non-standard repository", cfg.getTyped(SERVER_HOST))
-        .orElse(null);
-    assertNotNull(init);
-    ResponseEntity<Void> ans = repo.initKnowledgeArtifactRepository(init);
-    assertEquals(HttpStatus.CREATED, ans.getStatusCode());
-
-    ResponseEntity<KnowledgeArtifactRepository> ans2 = repo.getKnowledgeArtifactRepository(id.toString());
-
-    KnowledgeArtifactRepository descr = ans2.getBody();
-    assertEquals(URI.create(cfg.getTyped(BASE_NAMESPACE) +
-            "/repos/" +
-            id.toString()),
-        descr.getId().getUri());
-    assertEquals(URI.create(cfg.getTyped(SERVER_HOST) +
-            "/repos/" +
-            id.toString()),
-        descr.getHref());
-    assertEquals("non-standard repository",
-        descr.getName());
-    assertTrue(descr.getAlias() != null && descr.getAlias()
-        .contains(uri("uri:uuid:" + id.toString())));
-    assertNotNull(descr.getInstanceId());
-
-    ResponseEntity<Void> ans3 = repo.deleteKnowledgeArtifactRepository(descr.getId().getTag());
-    assertEquals(HttpStatus.OK, ans3.getStatusCode());
-  }
-
-  @Test
-  void testCustomRepository() {
-    UUID id = UUID.randomUUID();
-    KnowledgeArtifactRepository init = PlatformComponentHelper
-        .repositoryDescr(cfg.getTyped(BASE_NAMESPACE),
-            id.toString(), "non-standard repository", cfg.getTyped(SERVER_HOST))
-        .orElse(null);
-    assertNotNull(init);
-    ResponseEntity<Void> ans = repo.initKnowledgeArtifactRepository(init);
-    assertEquals(HttpStatus.CREATED, ans.getStatusCode());
-
-    ResponseEntity<List<KnowledgeArtifactRepository>> ans2 = repo.listKnowledgeArtifactRepositories();
-    assertEquals(HttpStatus.OK, ans2.getStatusCode());
-    assertEquals(2, ans2.getBody().size());
-
-    ans2.getBody().forEach((descr) -> {
-      ResponseEntity<Void> ansx = repo.isKnowledgeArtifactRepository(descr.getId().getTag());
-      assertEquals(HttpStatus.NO_CONTENT, ansx.getStatusCode());
-    });
-
-    ans2.getBody().stream()
-        .filter((descr) -> !cfg.getTyped(DEFAULT_REPOSITORY_ID).equals(descr.getId().getTag()))
-        .forEach((nonDefaultDescr) -> {
-          ResponseEntity<Void> ansy = repo
-              .deleteKnowledgeArtifactRepository(nonDefaultDescr.getId().getTag());
-          assertEquals(HttpStatus.OK, ansy.getStatusCode());
-        });
-
-    ResponseEntity<List<KnowledgeArtifactRepository>> ans4 = repo.listKnowledgeArtifactRepositories();
-    assertEquals(HttpStatus.OK, ans4.getStatusCode());
-    assertEquals(1, ans4.getBody().size());
-
-  }
-
-
-
-  // TODO: fail deleting default repository
+//  @Test
+//  void testCustomRepository() {
+//    UUID id = UUID.randomUUID();
+//    KnowledgeArtifactRepository init = PlatformComponentHelper
+//        .repositoryDescr(cfg.getTyped(BASE_NAMESPACE),
+//            id.toString(), "non-standard repository", cfg.getTyped(SERVER_HOST))
+//        .orElse(null);
+//    assertNotNull(init);
+//    ResponseEntity<Void> ans = repo.initKnowledgeArtifactRepository(init);
+//    assertEquals(HttpStatus.CREATED, ans.getStatusCode());
+//
+//    ResponseEntity<List<KnowledgeArtifactRepository>> ans2 = repo.listKnowledgeArtifactRepositories();
+//    assertEquals(HttpStatus.OK, ans2.getStatusCode());
+//    assertEquals(2, ans2.getBody().size());
+//
+//    ans2.getBody().forEach((descr) -> {
+//      ResponseEntity<Void> ansx = repo.isKnowledgeArtifactRepository(descr.getId().getTag());
+//      assertEquals(HttpStatus.NO_CONTENT, ansx.getStatusCode());
+//    });
+//
+//    ans2.getBody().stream()
+//        .filter((descr) -> !cfg.getTyped(DEFAULT_REPOSITORY_ID).equals(descr.getId().getTag()))
+//        .forEach((nonDefaultDescr) -> {
+//          ResponseEntity<Void> ansy = repo
+//              .deleteKnowledgeArtifactRepository(nonDefaultDescr.getId().getTag());
+//          assertEquals(HttpStatus.OK, ansy.getStatusCode());
+//        });
+//
+//    ResponseEntity<List<KnowledgeArtifactRepository>> ans4 = repo.listKnowledgeArtifactRepositories();
+//    assertEquals(HttpStatus.OK, ans4.getStatusCode());
+//    assertEquals(1, ans4.getBody().size());
+//
+//  }
 
 
 
