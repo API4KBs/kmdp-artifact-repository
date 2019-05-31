@@ -37,11 +37,11 @@ import org.apache.jackrabbit.value.BinaryImpl;
 
 public class JcrDao {
 
-  protected String JCR_DATA = "jcr:data";
-  protected String JCR_STATUS = "status";
-  protected String JCR_SERIES_STATUS = "seriesStatus";
-  protected String STATUS_AVAILABLE = "available";
-  protected String STATUS_UNAVAILABLE = "unavailable";
+  protected static final String JCR_DATA = "jcr:data";
+  protected static final String JCR_STATUS = "status";
+  protected static final String JCR_SERIES_STATUS = "seriesStatus";
+  protected static final String STATUS_AVAILABLE = "available";
+  protected static final String STATUS_UNAVAILABLE = "unavailable";
 
   private javax.jcr.Repository delegate;
 
@@ -64,7 +64,7 @@ public class JcrDao {
 
   public <T> DaoResult<T> execute(Function<Session, T> f) {
     try {
-      Session session = this.delegate.login(
+      Session session = delegate.login(
           new SimpleCredentials("admin", "admin".toCharArray())
       );
 
@@ -82,9 +82,10 @@ public class JcrDao {
       UUID id_, Boolean deleted) {
     String id = Text.escapeIllegalJcrChars(id_.toString());
 
-    return this.execute((Session session) -> {
+    return execute((Session session) -> {
       try {
-        if (session.getRootNode().hasNode(repositoryId) && session.getRootNode().getNode(repositoryId).hasNode(id)) {
+        Node rootNode = session.getRootNode();
+        if (artifactSeriesExists(rootNode, repositoryId, id)) {
           Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
           if(!deleted && resource.getProperty(JCR_SERIES_STATUS).getString().equals(STATUS_UNAVAILABLE)){
             throw new ResourceNoContentException("Artifact known, but not available.");
@@ -123,7 +124,7 @@ public class JcrDao {
   }
 
   public DaoResult<Version> getLatestResource(String repositoryId, UUID id, Boolean deleted) {
-    DaoResult<List<Version>> result = this.getResourceVersions(repositoryId, id, deleted);
+    DaoResult<List<Version>> result = getResourceVersions(repositoryId, id, deleted);
     List<Version> versions = result.getValue();
     if (versions.isEmpty()) {
       result.close();
@@ -144,9 +145,10 @@ public class JcrDao {
       String version, boolean getUnavailable) {
     String id = Text.escapeIllegalJcrChars(id_.toString());
 
-    return this.execute((Session session) -> {
+    return execute((Session session) -> {
       try {
-        if (!session.getRootNode().hasNode(repositoryId) || !session.getRootNode().getNode(repositoryId).hasNode(id)) {
+        Node rootNode = session.getRootNode();
+        if (!artifactSeriesExists(rootNode, repositoryId, id)) {
           throw new ResourceNotFoundException();
         }
         Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
@@ -170,7 +172,7 @@ public class JcrDao {
   public DaoResult<List<Node>> getResources(String repositoryId_,
       Boolean deleted, Map<String, String> query) {
     String repositoryId = ISO9075.encodePath(repositoryId_);
-    return this.execute((Session session) -> {
+    return execute((Session session) -> {
       try {
         if (!session.getRootNode().hasNode(repositoryId)) {
           throw new RepositoryNotFoundException();
@@ -210,10 +212,10 @@ public class JcrDao {
   public void deleteResource(String repositoryId, UUID id_) {
     String id = Text.escapeIllegalJcrChars(id_.toString());
 
-    try (DaoResult<?> ignored = this.execute((Session session) -> {
+    try (DaoResult<?> ignored = execute((Session session) -> {
       try {
-
-        if (session.getRootNode().hasNode(repositoryId) && session.getRootNode().getNode(repositoryId).hasNode(id)) {
+        Node rootNode = session.getRootNode();
+        if (artifactSeriesExists(rootNode, repositoryId, id)) {
           Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
           VersionManager versionManager = session.getWorkspace().getVersionManager();
           VersionHistory history = session.getWorkspace().getVersionManager()
@@ -247,11 +249,11 @@ public class JcrDao {
 
   public void deleteResource(String repositoryId, UUID id_, String version) {
     String id = Text.escapeIllegalJcrChars(id_.toString());
-    this.execute((Session session) -> {
+    execute((Session session) -> {
       try {
         VersionManager versionManager = session.getWorkspace().getVersionManager();
         Node rootNode = session.getRootNode();
-        if (rootNode.hasNode(repositoryId) && rootNode.getNode(repositoryId).hasNode(id)) {
+        if (artifactSeriesExists(rootNode, repositoryId, id)) {
           Node node = session.getRootNode().getNode(repositoryId).getNode(id);
           if (versionManager.getVersionHistory(node.getPath()).hasVersionLabel(version)) {
             versionManager.checkout(node.getPath());
@@ -286,12 +288,12 @@ public class JcrDao {
       byte[] payload, Map<String, String> metadata) {
     String id = Text.escapeIllegalJcrChars(id_.toString());
 
-    return this.execute((Session session) -> {
+    return execute((Session session) -> {
       try {
         VersionManager versionManager = session.getWorkspace().getVersionManager();
 
         // check if repository node exists
-        if(! session.getRootNode().hasNode(repositoryId)) {
+        if(!session.getRootNode().hasNode(repositoryId)) {
           session.getRootNode().addNode(repositoryId);
         }
         Node assetNode = session.getRootNode().getNode(repositoryId);
@@ -334,10 +336,10 @@ public class JcrDao {
   public DaoResult<Node> saveResource(String repositoryId, UUID id_) {
     String id = Text.escapeIllegalJcrChars(id_.toString());
 
-    return this.execute((Session session) -> {
+    return execute((Session session) -> {
       try {
         // check if repository node exists, if not, add it
-        if(! session.getRootNode().hasNode(repositoryId)) {
+        if(!session.getRootNode().hasNode(repositoryId)) {
           session.getRootNode().addNode(repositoryId);
         }
         Node assetNode = session.getRootNode().getNode(repositoryId);
@@ -356,7 +358,7 @@ public class JcrDao {
 
   public void enableResource(String repositoryId, UUID id_) {
     String id = Text.escapeIllegalJcrChars(id_.toString());
-    try (DaoResult<?> ignored = this.execute((Session session) -> {
+    try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         if (session.getRootNode().hasNode(repositoryId)) {
           if(session.getRootNode().getNode(repositoryId).hasNode(id)){
@@ -378,6 +380,7 @@ public class JcrDao {
             }
           }
           else {
+            //If artifact series doesn't exist, create it.
             saveResource(repositoryId, id_);
           }
         } else {
@@ -396,9 +399,10 @@ public class JcrDao {
 
     public void enableResource(String repositoryId, UUID id_, String versionId) {
         String id = Text.escapeIllegalJcrChars(id_.toString());
-        try (DaoResult<?> ignored = this.execute((Session session) -> {
+        try (DaoResult<?> ignored = execute((Session session) -> {
             try {
-                if (session.getRootNode().hasNode(repositoryId) && session.getRootNode().getNode(repositoryId).hasNode(id)) {
+              Node rootNode = session.getRootNode();
+                if (artifactSeriesExists(rootNode, repositoryId, id)) {
                     Node node = session.getRootNode().getNode(repositoryId).getNode(id);
                     VersionManager versionManager = session.getWorkspace().getVersionManager();
                     if(!versionManager.getVersionHistory(node.getPath()).hasVersionLabel(versionId)){
@@ -431,9 +435,13 @@ public class JcrDao {
     return version.getFrozenNode().getProperty(JCR_STATUS).getString().equals(STATUS_UNAVAILABLE);
   }
 
+  private boolean artifactSeriesExists(Node rootNode, String repositoryId, String artifactId) throws RepositoryException {
+    return rootNode.hasNode(repositoryId) && rootNode.getNode(repositoryId).hasNode(artifactId);
+  }
+
   protected void shutdown() {
-    if (this.cleanup !=null) {
-      this.cleanup.run();
+    if (cleanup !=null) {
+      cleanup.run();
     }
   }
 
@@ -449,7 +457,7 @@ public class JcrDao {
 
     @Override
     public void close() {
-      this.session.logout();
+      session.logout();
     }
 
     public T getValue() {

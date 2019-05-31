@@ -33,13 +33,13 @@ public class HrefBuilder {
 
   public URI getArtifactHref(String artifactId,
       String versionTag, String repositoryId) {
-    return URI.create(URIPathHelper.knowledgeArtifactLocation(this.host,
+    return URI.create(URIPathHelper.knowledgeArtifactLocation(host,
             repositoryId, artifactId,
         versionTag));
   }
 
   public URI getSeriesHref(String artifactId, String repositoryId) {
-    return URI.create(knowledgeArtifactSeriesLocation(this.host,
+    return URI.create(knowledgeArtifactSeriesLocation(host,
             repositoryId, artifactId));
   }
 
