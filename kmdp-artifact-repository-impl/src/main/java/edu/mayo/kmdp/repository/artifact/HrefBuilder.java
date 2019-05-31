@@ -28,30 +28,31 @@ public class HrefBuilder {
     this.cfg = cfg;
     this.host = StringUtils
         .removeEnd(cfg.getTyped(
-            KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.SERVER_HOST).toString(), "/");
+            KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.SERVER_HOST)
+            .toString(), "/");
   }
 
   public URI getArtifactHref(String artifactId,
       String versionTag, String repositoryId) {
     return URI.create(URIPathHelper.knowledgeArtifactLocation(host,
-            repositoryId, artifactId,
+        repositoryId, artifactId,
         versionTag));
   }
 
   public URI getSeriesHref(String artifactId, String repositoryId) {
     return URI.create(knowledgeArtifactSeriesLocation(host,
-            repositoryId, artifactId));
+        repositoryId, artifactId));
   }
 
   public static String knowledgeArtifactSeriesLocation(String host, String repositoryId,
-                                                 String artifactId) {
+      String artifactId) {
     return String
-            .format("%s%s", host, knowledgeArtifactSeriesPath(repositoryId, artifactId));
+        .format("%s%s", host, knowledgeArtifactSeriesPath(repositoryId, artifactId));
   }
 
   public static String knowledgeArtifactSeriesPath(String repositoryId, String artifactId) {
     return String
-            .format("/repos/%s/artifacts/%s", repositoryId, artifactId);
+        .format("/repos/%s/artifacts/%s", repositoryId, artifactId);
   }
 
 }

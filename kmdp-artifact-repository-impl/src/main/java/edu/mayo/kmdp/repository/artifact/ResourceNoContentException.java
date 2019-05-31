@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 package edu.mayo.kmdp.repository.artifact;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus (code = HttpStatus.NO_CONTENT)
+@ResponseStatus(code = HttpStatus.NO_CONTENT)
 public class ResourceNoContentException extends RuntimeException {
 
   public ResourceNoContentException(String message) {

@@ -15,10 +15,22 @@
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.ResourceNotFoundException;
 import edu.mayo.kmdp.util.FileUtil;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import javax.jcr.Node;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.version.Version;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
 import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
@@ -27,21 +39,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import javax.jcr.Node;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.version.Version;
-import java.nio.file.Path;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 class JcrDaoTest {
 
   @TempDir
   Path tempDir;
-  
+
   private JcrDao dao;
 
   private UUID artifactUUID;
@@ -49,7 +51,7 @@ class JcrDaoTest {
 
   @BeforeEach
   void repo() {
-        KnowledgeArtifactRepositoryServerConfig cfg =
+    KnowledgeArtifactRepositoryServerConfig cfg =
         new KnowledgeArtifactRepositoryServerConfig().with(
             KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID, "1");
 
@@ -58,7 +60,7 @@ class JcrDaoTest {
     dao = new JcrDao(jcr, cfg);
     artifactUUID = UUID.randomUUID();
     artifactUUID2 = UUID.randomUUID();
-}
+  }
 
   @AfterEach
   void cleanup() {
@@ -75,7 +77,7 @@ class JcrDaoTest {
   }
 
   @Test
-  void testLoadAndGetHasAvailableStatus () throws Exception {
+  void testLoadAndGetHasAvailableStatus() throws Exception {
     dao.saveResource("1", artifactUUID, "new", "hi!".getBytes());
 
     Node result = dao.getResource("1", artifactUUID, "new", false).getValue().getFrozenNode();
@@ -130,7 +132,7 @@ class JcrDaoTest {
     dao.saveResource("1", artifactUUID, "new1", "hi1".getBytes());
     dao.saveResource("1", artifactUUID, "new2", "hi2".getBytes());
 
-    dao.deleteResource("1",artifactUUID, "new1");
+    dao.deleteResource("1", artifactUUID, "new1");
 
     Node version = dao.getResource("1", artifactUUID, "new1", true).getValue().getFrozenNode();
     Node version2 = dao.getResource("1", artifactUUID, "new2", true).getValue().getFrozenNode();
@@ -146,8 +148,7 @@ class JcrDaoTest {
     dao.saveResource("1", artifactUUID, "new3", "hi2".getBytes());
     dao.saveResource("1", artifactUUID, "new4", "hi2".getBytes());
 
-
-    dao.deleteResource("1",artifactUUID);
+    dao.deleteResource("1", artifactUUID);
 
     Node version = dao.getResource("1", artifactUUID, "new1", true).getValue().getFrozenNode();
     Node version2 = dao.getResource("1", artifactUUID, "new2", true).getValue().getFrozenNode();

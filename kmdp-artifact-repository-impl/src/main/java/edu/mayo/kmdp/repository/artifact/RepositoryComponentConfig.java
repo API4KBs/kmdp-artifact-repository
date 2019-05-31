@@ -38,8 +38,9 @@ public class RepositoryComponentConfig {
   @Bean
   @Profile("default")
   public KnowledgeArtifactRepository repository() throws Exception {
-    File dataDir = cfg.getTyped(KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.BASE_DIR);
-    if(! dataDir.exists()) {
+    File dataDir = cfg.getTyped(
+        KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.BASE_DIR);
+    if (!dataDir.exists()) {
       boolean dirCreationSuccess = dataDir.mkdir();
       if (!dirCreationSuccess) {
         throw new RuntimeException();
@@ -49,13 +50,14 @@ public class RepositoryComponentConfig {
     FileStore fs = FileStoreBuilder.fileStoreBuilder(dataDir).build();
     SegmentNodeStore ns = SegmentNodeStoreBuilders.builder(fs).build();
 
-    return new JcrKnowledgeArtifactRepository(new Jcr(new Oak(ns)).createRepository(), fs::close,cfg);
+    return new JcrKnowledgeArtifactRepository(new Jcr(new Oak(ns)).createRepository(), fs::close,
+        cfg);
   }
 
   @Bean
   @Profile("inmemory")
   public KnowledgeArtifactRepository inMemoryRepository() throws Exception {
-    return new JcrKnowledgeArtifactRepository(new Jcr(new Oak()).createRepository(),cfg);
+    return new JcrKnowledgeArtifactRepository(new Jcr(new Oak()).createRepository(), cfg);
   }
 
 }

@@ -22,15 +22,23 @@ import edu.mayo.kmdp.repository.artifact.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.ResourceNoContentException;
 import edu.mayo.kmdp.repository.artifact.ResourceNotFoundException;
 import java.io.Closeable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.jcr.*;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 import javax.jcr.query.QueryResult;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
-
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.jackrabbit.util.Text;
 import org.apache.jackrabbit.value.BinaryImpl;
@@ -87,31 +95,32 @@ public class JcrDao {
         Node rootNode = session.getRootNode();
         if (artifactSeriesExists(rootNode, repositoryId, id)) {
           Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
-          if(!deleted && resource.getProperty(JCR_SERIES_STATUS).getString().equals(STATUS_UNAVAILABLE)){
+          if (!deleted && resource.getProperty(JCR_SERIES_STATUS).getString()
+              .equals(STATUS_UNAVAILABLE)) {
             throw new ResourceNoContentException("Artifact known, but not available.");
           }
           VersionHistory history = session.getWorkspace().getVersionManager()
-                  .getVersionHistory(resource.getPath());
+              .getVersionHistory(resource.getPath());
           String[] versions = history.getVersionLabels();
 
           return Arrays.stream(versions)
-            .map(label -> {
-            try {
-              return history.getVersionByLabel(label);
-            } catch (RepositoryException e) {
-              throw new RuntimeException(e);
-            }
-          })
-                  .filter(version -> {
-                    //If deleted != true, filter out unavailable versions
-                    try {
-                      return deleted || !versionIsUnavailable(version);
-                    } catch (RepositoryException e) {
-                      throw new RuntimeException(e);
-                    }
-                  })
+              .map(label -> {
+                try {
+                  return history.getVersionByLabel(label);
+                } catch (RepositoryException e) {
+                  throw new RuntimeException(e);
+                }
+              })
+              .filter(version -> {
+                //If deleted != true, filter out unavailable versions
+                try {
+                  return deleted || !versionIsUnavailable(version);
+                } catch (RepositoryException e) {
+                  throw new RuntimeException(e);
+                }
+              })
 
-                  .collect(Collectors.toList());
+              .collect(Collectors.toList());
         } else {
           throw new ResourceNotFoundException();
         }
@@ -128,7 +137,8 @@ public class JcrDao {
     List<Version> versions = result.getValue();
     if (versions.isEmpty()) {
       result.close();
-      throw new ResourceNoContentException("Artifact known but either not available, or no versions are available");
+      throw new ResourceNoContentException(
+          "Artifact known but either not available, or no versions are available");
     }
     versions.sort((Version v1, Version v2) -> {
       try {
@@ -138,7 +148,7 @@ public class JcrDao {
         throw new RuntimeException(e);
       }
     });
-      return new DaoResult<>(versions.get(0), result.getSession());
+    return new DaoResult<>(versions.get(0), result.getSession());
   }
 
   public DaoResult<Version> getResource(String repositoryId, UUID id_,
@@ -153,15 +163,15 @@ public class JcrDao {
         }
         Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
         VersionHistory history = session.getWorkspace().getVersionManager()
-                .getVersionHistory(resource.getPath());
-        if(!history.hasVersionLabel(version)) {
+            .getVersionHistory(resource.getPath());
+        if (!history.hasVersionLabel(version)) {
           throw new ResourceNotFoundException();
         }
         if (!getUnavailable && versionIsUnavailable(history.getVersionByLabel(version))) {
           throw new ResourceNoContentException("The version is known but currently unavailable.");
         }
         return history.getVersionByLabel(version);
-      }catch(ResourceNoContentException | ResourceNotFoundException e){
+      } catch (ResourceNoContentException | ResourceNotFoundException e) {
         throw e;
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -182,25 +192,26 @@ public class JcrDao {
           queryString = "";
         } else {
           String q = query.entrySet().stream()
-                  .map(entry -> String.format("jcr:%s='%s'", entry.getKey(), entry.getValue()))
-                  .collect(Collectors.joining(" AND "));
+              .map(entry -> String.format("jcr:%s='%s'", entry.getKey(), entry.getValue()))
+              .collect(Collectors.joining(" AND "));
           queryString = "[" + q + "]";
         }
         QueryResult queryResult = session.getWorkspace().getQueryManager()
-                .createQuery(String.format("//%s/*%s", repositoryId, queryString), "xpath")
-                .execute();
+            .createQuery(String.format("//%s/*%s", repositoryId, queryString), "xpath")
+            .execute();
 
         NodeIterator nodes = queryResult.getNodes();
         List<Node> result = new ArrayList<>();
         while (nodes.hasNext()) {
           Node node = nodes.nextNode();
-          if (!deleted && node.hasProperty(JCR_SERIES_STATUS) && node.getProperty(JCR_SERIES_STATUS).getString().equals(STATUS_UNAVAILABLE)){
+          if (!deleted && node.hasProperty(JCR_SERIES_STATUS) && node.getProperty(JCR_SERIES_STATUS)
+              .getString().equals(STATUS_UNAVAILABLE)) {
             continue;
           }
           result.add(node);
         }
         return result;
-      }catch(RepositoryNotFoundException e){
+      } catch (RepositoryNotFoundException e) {
         throw e;
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -219,7 +230,7 @@ public class JcrDao {
           Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
           VersionManager versionManager = session.getWorkspace().getVersionManager();
           VersionHistory history = session.getWorkspace().getVersionManager()
-                  .getVersionHistory(resource.getPath());
+              .getVersionHistory(resource.getPath());
           String[] labels = history.getVersionLabels();
           versionManager.checkout(resource.getPath());
           resource.setProperty(JCR_SERIES_STATUS, STATUS_UNAVAILABLE);
@@ -231,12 +242,12 @@ public class JcrDao {
             session.save();
             Version newNode = versionManager.checkin(resource.getPath());
             versionManager.getVersionHistory(resource.getPath())
-                    .addVersionLabel(newNode.getName(), label, true);
+                .addVersionLabel(newNode.getName(), label, true);
           }
         } else {
           throw new ResourceNotFoundException();
         }
-      } catch (ResourceNotFoundException e){
+      } catch (ResourceNotFoundException e) {
         throw e;
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -261,10 +272,9 @@ public class JcrDao {
             session.save();
             Version newNode = versionManager.checkin(node.getPath());
             versionManager.getVersionHistory(node.getPath())
-                    .addVersionLabel(newNode.getName(), version, true);
+                .addVersionLabel(newNode.getName(), version, true);
             return null;
-          }
-          else {
+          } else {
             throw new ResourceNotFoundException();
           }
         } else {
@@ -293,7 +303,7 @@ public class JcrDao {
         VersionManager versionManager = session.getWorkspace().getVersionManager();
 
         // check if repository node exists
-        if(!session.getRootNode().hasNode(repositoryId)) {
+        if (!session.getRootNode().hasNode(repositoryId)) {
           session.getRootNode().addNode(repositoryId);
         }
         Node assetNode = session.getRootNode().getNode(repositoryId);
@@ -339,7 +349,7 @@ public class JcrDao {
     return execute((Session session) -> {
       try {
         // check if repository node exists, if not, add it
-        if(!session.getRootNode().hasNode(repositoryId)) {
+        if (!session.getRootNode().hasNode(repositoryId)) {
           session.getRootNode().addNode(repositoryId);
         }
         Node assetNode = session.getRootNode().getNode(repositoryId);
@@ -361,7 +371,7 @@ public class JcrDao {
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         if (session.getRootNode().hasNode(repositoryId)) {
-          if(session.getRootNode().getNode(repositoryId).hasNode(id)){
+          if (session.getRootNode().getNode(repositoryId).hasNode(id)) {
             Node node = session.getRootNode().getNode(repositoryId).getNode(id);
             VersionManager versionManager = session.getWorkspace().getVersionManager();
             VersionHistory history = versionManager.getVersionHistory(node.getPath());
@@ -376,17 +386,16 @@ public class JcrDao {
               session.save();
               Version updatedNode = versionManager.checkin(node.getPath());
               versionManager.getVersionHistory(node.getPath())
-                      .addVersionLabel(updatedNode.getName(), label, true);
+                  .addVersionLabel(updatedNode.getName(), label, true);
             }
-          }
-          else {
+          } else {
             //If artifact series doesn't exist, create it.
             saveResource(repositoryId, id_);
           }
         } else {
           throw new ResourceNotFoundException();
         }
-      } catch (ResourceNotFoundException e){
+      } catch (ResourceNotFoundException e) {
         throw e;
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -397,50 +406,51 @@ public class JcrDao {
     }
   }
 
-    public void enableResource(String repositoryId, UUID id_, String versionId) {
-        String id = Text.escapeIllegalJcrChars(id_.toString());
-        try (DaoResult<?> ignored = execute((Session session) -> {
-            try {
-              Node rootNode = session.getRootNode();
-                if (artifactSeriesExists(rootNode, repositoryId, id)) {
-                    Node node = session.getRootNode().getNode(repositoryId).getNode(id);
-                    VersionManager versionManager = session.getWorkspace().getVersionManager();
-                    if(!versionManager.getVersionHistory(node.getPath()).hasVersionLabel(versionId)){
-                        throw new ResourceNotFoundException();
-                    }
-                    session.save();
-                    versionManager.checkout(node.getPath());
-                  node.setProperty(JCR_SERIES_STATUS, STATUS_AVAILABLE);
-                    node.setProperty(JCR_STATUS, STATUS_AVAILABLE);
-                    session.save();
-                    Version updatedNode = versionManager.checkin(node.getPath());
-                    versionManager.getVersionHistory(node.getPath())
-                            .addVersionLabel(updatedNode.getName(), versionId, true);
+  public void enableResource(String repositoryId, UUID id_, String versionId) {
+    String id = Text.escapeIllegalJcrChars(id_.toString());
+    try (DaoResult<?> ignored = execute((Session session) -> {
+      try {
+        Node rootNode = session.getRootNode();
+        if (artifactSeriesExists(rootNode, repositoryId, id)) {
+          Node node = session.getRootNode().getNode(repositoryId).getNode(id);
+          VersionManager versionManager = session.getWorkspace().getVersionManager();
+          if (!versionManager.getVersionHistory(node.getPath()).hasVersionLabel(versionId)) {
+            throw new ResourceNotFoundException();
+          }
+          session.save();
+          versionManager.checkout(node.getPath());
+          node.setProperty(JCR_SERIES_STATUS, STATUS_AVAILABLE);
+          node.setProperty(JCR_STATUS, STATUS_AVAILABLE);
+          session.save();
+          Version updatedNode = versionManager.checkin(node.getPath());
+          versionManager.getVersionHistory(node.getPath())
+              .addVersionLabel(updatedNode.getName(), versionId, true);
 
-                } else {
-                    throw new ResourceNotFoundException();
-                }
-            } catch (ResourceNotFoundException e){
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            return null;
-        })) {
+        } else {
+          throw new ResourceNotFoundException();
         }
+      } catch (ResourceNotFoundException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      return null;
+    })) {
     }
+  }
 
   private boolean versionIsUnavailable(Version version) throws RepositoryException {
     return version.getFrozenNode().getProperty(JCR_STATUS).getString().equals(STATUS_UNAVAILABLE);
   }
 
-  private boolean artifactSeriesExists(Node rootNode, String repositoryId, String artifactId) throws RepositoryException {
+  private boolean artifactSeriesExists(Node rootNode, String repositoryId, String artifactId)
+      throws RepositoryException {
     return rootNode.hasNode(repositoryId) && rootNode.getNode(repositoryId).hasNode(artifactId);
   }
 
   protected void shutdown() {
-    if (cleanup !=null) {
+    if (cleanup != null) {
       cleanup.run();
     }
   }

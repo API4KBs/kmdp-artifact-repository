@@ -99,7 +99,8 @@ public class KnowledgeArtifactRepositoryServerConfig extends
     }
 
     private static String getBaseNamespace() {
-      String namespace = System.getProperty("http://edu.mayo.kmdp/artifactRepository/baseNamespace");
+      String namespace = System
+          .getProperty("http://edu.mayo.kmdp/artifactRepository/baseNamespace");
       return !Util.isEmpty(namespace) ? namespace : "http://edu.mayo.kmdp/test";
     }
 
