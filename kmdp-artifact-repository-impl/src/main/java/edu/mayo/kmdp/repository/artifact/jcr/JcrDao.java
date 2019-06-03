@@ -1,17 +1,15 @@
 /**
  * Copyright © 2018 Mayo Clinic (RSTKNOWLEDGEMGMT@mayo.edu)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
@@ -125,8 +123,10 @@ public class JcrDao {
           throw new ResourceNotFoundException();
         }
       } catch (ResourceNotFoundException | ResourceNoContentException e) {
+        session.logout();
         throw e;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
     });
@@ -172,8 +172,10 @@ public class JcrDao {
         }
         return history.getVersionByLabel(version);
       } catch (ResourceNoContentException | ResourceNotFoundException e) {
+        session.logout();
         throw e;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
     });
@@ -212,8 +214,10 @@ public class JcrDao {
         }
         return result;
       } catch (RepositoryNotFoundException e) {
+        session.logout();
         throw e;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
     });
@@ -245,11 +249,13 @@ public class JcrDao {
                 .addVersionLabel(newNode.getName(), label, true);
           }
         } else {
+          session.logout();
           throw new ResourceNotFoundException();
         }
       } catch (ResourceNotFoundException e) {
         throw e;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
 
@@ -260,7 +266,7 @@ public class JcrDao {
 
   public void deleteResource(String repositoryId, UUID id_, String version) {
     String id = Text.escapeIllegalJcrChars(id_.toString());
-    execute((Session session) -> {
+    try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         VersionManager versionManager = session.getWorkspace().getVersionManager();
         Node rootNode = session.getRootNode();
@@ -281,11 +287,14 @@ public class JcrDao {
           throw new ResourceNotFoundException();
         }
       } catch (ResourceNotFoundException e) {
+        session.logout();
         throw e;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
-    });
+    })) {
+    }
   }
 
   public void saveResource(String repositoryId, UUID id, String version,
@@ -338,6 +347,7 @@ public class JcrDao {
 
         return newNode;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
     });
@@ -361,6 +371,7 @@ public class JcrDao {
 
         return node;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
     });
@@ -393,14 +404,15 @@ public class JcrDao {
             saveResource(repositoryId, id_);
           }
         } else {
+          session.logout();
           throw new ResourceNotFoundException();
         }
       } catch (ResourceNotFoundException e) {
         throw e;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
-
       return null;
     })) {
     }
@@ -427,11 +439,13 @@ public class JcrDao {
               .addVersionLabel(updatedNode.getName(), versionId, true);
 
         } else {
+          session.logout();
           throw new ResourceNotFoundException();
         }
       } catch (ResourceNotFoundException e) {
         throw e;
       } catch (Exception e) {
+        session.logout();
         throw new RuntimeException(e);
       }
 
