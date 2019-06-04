@@ -7,11 +7,11 @@
   <parent>
     <groupId>edu.mayo.kmdp</groupId>
     <artifactId>kmdp-artifact-repository-service-base</artifactId>
-    <version>1.0.2</version>
+    <version>[2.0.0,2.0.1)</version>
   </parent>
 
   <artifactId>kmdp-artifact-repository</artifactId>
-  <version>1.0.2</version>
+  <version>2.0.0</version>
 
   <packaging>pom</packaging>
 
@@ -20,24 +20,31 @@
     <module>kmdp-artifact-repository-test</module>
   </modules>
 
-  <repositories>
-    <repository>
-      <id>bintray-api4kbs-API4KP-Mvn-Repo</id>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <name>bintray</name>
-      <url>https://dl.bintray.com/api4kbs/API4KP-Mvn-Repo</url>
-    </repository>
-  </repositories>
+  <profiles>
+    <profile>
+      <id>public</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>bintray-api4kbs-API4KP-Mvn-Repo</id>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <name>bintray</name>
+          <url>https://dl.bintray.com/api4kbs/API4KP-Mvn-Repo</url>
+        </repository>
+      </repositories>
 
-
-  <distributionManagement>
-    <repository>
-      <id>bintray-api4kbs-API4KP-Mvn-Repo</id>
-      <name>api4kbs-API4KP-Mvn-Repo</name>
-      <url>https://api.bintray.com/maven/api4kbs/API4KP-Mvn-Repo/kmdp-artifact-repository/;override=1;publish=1</url>
-    </repository>
-  </distributionManagement>
+      <distributionManagement>
+        <repository>
+          <id>bintray-api4kbs-API4KP-Mvn-Repo</id>
+          <name>api4kbs-API4KP-Mvn-Repo</name>
+          <url>https://api.bintray.com/maven/api4kbs/API4KP-Mvn-Repo/kmdp-artifact-repository/;override=1;publish=1</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+  </profiles>
 
 </project>
