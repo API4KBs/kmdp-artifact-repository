@@ -44,6 +44,12 @@
       <artifactId>junit-platform-commons</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>edu.mayo.kmdp</groupId>
+      <artifactId>kmdp-artifact-repository-service-client</artifactId>
+      <version>${kmdp.impl.version}</version>
+    </dependency>
+
   </dependencies>
 
   <build>
