@@ -7,11 +7,11 @@
   <parent>
     <groupId>edu.mayo.kmdp</groupId>
     <artifactId>kmdp-artifact-repository-service-base</artifactId>
-    <version>(2.0.1,2.0.3)</version>
+    <version>(2.4.0,2.5.1]</version>
   </parent>
 
   <artifactId>kmdp-knowledge-artifact-repository-impl</artifactId>
-  <version>2.0.0</version>
+  <version>2.0.5</version>
   <packaging>war</packaging>
 
   <dependencies>
@@ -48,6 +48,7 @@
       <groupId>edu.mayo.kmdp</groupId>
       <artifactId>kmdp-artifact-repository-service-client</artifactId>
       <version>${kmdp.impl.version}</version>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>
