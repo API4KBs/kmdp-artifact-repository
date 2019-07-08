@@ -19,6 +19,7 @@ import edu.mayo.kmdp.id.helper.DatatypeHelper;
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.omg.spec.api4kp._1_0.identifiers.Pointer;
 import org.omg.spec.api4kp._1_0.identifiers.URIIdentifier;
 import org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -211,13 +213,13 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public ResponseEntity<Void> addKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       byte[] document) {
-    //TODO success should return location of new version
     Map<String, String> params = new HashMap<>();
 
     String versionId = UUID.randomUUID().toString();
-    try (JcrDao.DaoResult<Version> ignored = dao
+    try (JcrDao.DaoResult<Version> result = dao
         .saveResource(repositoryId, artifactId, versionId, document, params)) {
-      return new ResponseEntity<>(HttpStatus.OK);
+      URI location = versionToPointer(result.getValue(), repositoryId).getHref();
+      return wrapLocation(location);
     }
   }
 
@@ -333,6 +335,12 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
   private <T> ResponseEntity<T> wrap(T resource) {
     return new ResponseEntity<T>(resource, HttpStatus.OK);
+  }
+
+  private <T> ResponseEntity<T> wrapLocation(URI location) {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.setLocation(location);
+    return new ResponseEntity<T>(httpHeaders, HttpStatus.CREATED);
   }
 
 }
