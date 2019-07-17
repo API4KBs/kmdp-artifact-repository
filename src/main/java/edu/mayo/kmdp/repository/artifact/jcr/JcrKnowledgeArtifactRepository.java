@@ -15,10 +15,14 @@
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
+import static edu.mayo.kmdp.util.ws.ResponseHelper.notSupported;
+import static edu.mayo.kmdp.util.ws.ResponseHelper.succeed;
+
 import edu.mayo.kmdp.id.helper.DatatypeHelper;
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.util.ws.ResponseHelper;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -92,35 +96,35 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
   @Override
   public ResponseEntity<List<KnowledgeArtifactRepository>> listKnowledgeArtifactRepositories() {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    return notSupported();
   }
 
   @Override
   public ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> initKnowledgeArtifactRepository() {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    return notSupported();
   }
 
   @Override
   public ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> setKnowledgeArtifactRepository(
       String repositoryId,
       KnowledgeArtifactRepository repositoryDescr) {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    return notSupported();
   }
 
   @Override
   public ResponseEntity<Void> isKnowledgeArtifactRepository(String repositoryId) {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    return notSupported();
   }
 
   @Override
   public ResponseEntity<KnowledgeArtifactRepository> getKnowledgeArtifactRepository(
       String repositoryId) {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    return notSupported();
   }
 
   @Override
   public ResponseEntity<Void> disableKnowledgeArtifactRepository(String repositoryId) {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    return notSupported();
   }
 
   //*********************************************************************************************/
@@ -138,7 +142,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
           .map(node -> artifactToPointer(node, repositoryId))
           .collect(Collectors.toList());
 
-      return wrap(pointers);
+      return succeed(pointers);
     }
   }
 
@@ -148,14 +152,14 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
     try (JcrDao.DaoResult<Node> ignored = dao
         .saveResource(repositoryId, artifactId)) {
-      return new ResponseEntity<>(artifactId, HttpStatus.CREATED);
+      return succeed(artifactId, HttpStatus.CREATED);
     }
   }
 
   @Override
   public ResponseEntity<Void> clearKnowledgeRepository(String repositoryId,
       Boolean deleted) {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    return notSupported();
   }
 
   @Override
@@ -164,7 +168,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     try (JcrDao.DaoResult<Version> result = dao
         .getLatestResource(repositoryId, artifactId, deleted)) {
       Version version = result.getValue();
-      return wrap(getDataFromNode(version));
+      return succeed(getDataFromNode(version));
     }
   }
 
@@ -173,7 +177,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
       Boolean deleted) {
     try (JcrDao.DaoResult<List<Version>> ignored = dao
         .getResourceVersions(repositoryId, artifactId, deleted)) {
-      return new ResponseEntity<>(HttpStatus.OK);
+      return succeed();
     }
   }
 
@@ -181,17 +185,17 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   public ResponseEntity<Void> enableKnowledgeArtifact(String repositoryId,
       UUID artifactId) {
     dao.enableResource(repositoryId, artifactId);
-    return new ResponseEntity<>(HttpStatus.CREATED);
+    return succeed(HttpStatus.CREATED);
   }
 
   @Override
   public ResponseEntity<Void> deleteKnowledgeArtifact(String repositoryId, UUID artifactId,
       Boolean deleted) {
     if (deleted) {
-      return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+      return notSupported();
     }
     dao.deleteResource(repositoryId, artifactId);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return succeed(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -203,8 +207,8 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
       List<Version> versions = result.getValue();
 
       return versions.isEmpty()
-          ? wrap(Collections.emptyList())
-          : wrap(versions.stream()
+          ? succeed(Collections.emptyList())
+          : succeed(versions.stream()
               .map(version -> versionToPointer(version, repositoryId))
               .collect(Collectors.toList()));
     }
@@ -219,7 +223,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     try (JcrDao.DaoResult<Version> result = dao
         .saveResource(repositoryId, artifactId, versionId, document, params)) {
       URI location = versionToPointer(result.getValue(), repositoryId).getHref();
-      return wrapLocation(location);
+      return succeed(location,HttpStatus.CREATED,HttpHeaders::setLocation);
     }
   }
 
@@ -234,7 +238,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
         .getResource(repositoryId, artifactId, versionTag, deleted)) {
       Version version = result.getValue();
 
-      return wrap(getDataFromNode(version));
+      return succeed(getDataFromNode(version));
 
       // TODO: set mime type
     }
@@ -245,14 +249,14 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
       String versionTag, Boolean deleted) {
     try (JcrDao.DaoResult<Version> ignored = dao
         .getResource(repositoryId, artifactId, versionTag, deleted)) {
-      return new ResponseEntity<>(HttpStatus.OK);
+      return succeed();
     }
   }
 
   public ResponseEntity<Void> enableKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
     dao.enableResource(repositoryId, artifactId, versionTag);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return succeed(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -263,7 +267,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     try (JcrDao.DaoResult<Version> ignored = dao
         .saveResource(repositoryId, artifactId, versionTag, document, params)) {
 
-      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+      return succeed(HttpStatus.NO_CONTENT);
     }
   }
 
@@ -271,11 +275,11 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   public ResponseEntity<Void> deleteKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
     if (deleted) {
-      return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+      return notSupported();
     }
     dao.deleteResource(repositoryId, artifactId, versionTag);
 
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return succeed(HttpStatus.NO_CONTENT);
   }
 
 
@@ -333,14 +337,5 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     }
   }
 
-  private <T> ResponseEntity<T> wrap(T resource) {
-    return new ResponseEntity<T>(resource, HttpStatus.OK);
-  }
-
-  private <T> ResponseEntity<T> wrapLocation(URI location) {
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.setLocation(location);
-    return new ResponseEntity<T>(httpHeaders, HttpStatus.CREATED);
-  }
 
 }
