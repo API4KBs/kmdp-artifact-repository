@@ -29,11 +29,14 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
 import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
@@ -449,7 +452,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
   }
 
-  //"Ensures a knowledge artifact is available"
+  //"Enable Knowledge Artifact Series"
 
   @Test
   void testEnableSeriesRepoUnknown() {
@@ -724,7 +727,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     Version version = dao.getLatestResource("default", artifactID2, false).getValue();
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals("hi!", getPayload(version));
     assertEquals("available", getStatus(version));
   }
@@ -736,7 +739,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     Version version = dao.getLatestResource("default", artifactID2, false).getValue();
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals("hi!", getPayload(version));
     assertEquals("available", getStatus(version));
   }
@@ -749,7 +752,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     Version version = dao.getLatestResource("default", artifactID2, false).getValue();
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals("hi!", getPayload(version));
     assertEquals("available", getStatus(version));
   }
@@ -761,22 +764,24 @@ class JcrKnowledgeArtifactRepositoryTest {
         .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     Version version = dao.getLatestResource("default", artifactID2, false).getValue();
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals("hi!", getPayload(version));
     assertEquals("available", getStatus(version));
   }
 
+
   @Test
   void testAddArtifactSeriesReturnsLocation() {
-    //TODO: headers issue is fixed
+    ResponseEntity<Void> response = adapter
+      .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
+    String location = response.getHeaders().getLocation().toString();
+    String artifact = StringUtils.substringBetween(location, "artifacts/", "/versions");
+    String repo = StringUtils.substringBetween(location, "repos/", "/artifact");
 
-//        dao.saveResource("default", artifactID2, "1", "hi!".getBytes());
-//        ResponseEntity<Void> response = adapter.addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
-//
-//
-//        assertEquals("", response.getHeaders().get());
-//        assertEquals("hi!", getPayload(version));
-//        assertEquals("available", getStatus(version));
+    assertEquals(artifactID2.toString(), artifact);
+    assertEquals("default", repo);
+
+
   }
 
 
