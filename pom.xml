@@ -7,14 +7,20 @@
   <parent>
     <groupId>edu.mayo.kmdp</groupId>
     <artifactId>kmdp-artifact-repository-service-base</artifactId>
-    <version>2.5.0</version>
+    <version>3.0.0</version> 
   </parent>
 
   <artifactId>kmdp-knowledge-artifact-repository-impl</artifactId>
-  <version>2.1.0</version>
+  <version>2.3.0</version>
   <packaging>war</packaging>
 
   <dependencies>
+
+    <dependency>
+      <groupId>edu.mayo.kmdp</groupId>
+      <artifactId>kmdp-rest-ws-utils</artifactId>
+      <version>${kmdp.impl.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
