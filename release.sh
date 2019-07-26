@@ -54,7 +54,7 @@ git rebase "rel_$1"
 mvn versions:set -DnewVersion=$3
 
 ## cannot set parent version to a range with maven 3.3.9 / maven versions 2.7
-sed -i -r "/<parent>/,/<\/parent>/ s|<version>([0-9]+\.[0-9]+\.[0-9]+)</version>|<version>($2,$4]</version> |" pom.xml
+sed -i -r "/<parent>/,/<\/parent>/ s|<version>([0-9]+\.[0-9]+\.[0-9]+)</version>|<version>[$2,$4]</version> |" pom.xml
 
 
 # Commit changes
