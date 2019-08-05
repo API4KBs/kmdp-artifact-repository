@@ -20,6 +20,7 @@ git checkout -b "rel_$1"
 
 # Apply all necesssary version changes/fixtures
 mvn versions:set -DnewVersion=$1
+mvn versions:update-child-modules
 
 ## cannot set parent version to a range with maven 3.3.9 / maven versions 2.7
 ## mvn versions:update-parent -DparentVersion=$1
@@ -52,6 +53,7 @@ git rebase "rel_$1"
 
 # Revert all necesssary version changes/fixtures
 mvn versions:set -DnewVersion=$3
+mvn versions:update-child-modules
 
 ## cannot set parent version to a range with maven 3.3.9 / maven versions 2.7
 sed -i -r "/<parent>/,/<\/parent>/ s|<version>([0-9]+\.[0-9]+\.[0-9]+)</version>|<version>[$2,$4]</version> |" pom.xml
