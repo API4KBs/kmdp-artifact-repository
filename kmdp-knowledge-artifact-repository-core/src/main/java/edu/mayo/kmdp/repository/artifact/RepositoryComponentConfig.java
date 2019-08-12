@@ -56,7 +56,7 @@ public class RepositoryComponentConfig {
 
   @Bean
   @Profile("inmemory")
-  public KnowledgeArtifactRepository inMemoryRepository() throws Exception {
+  public KnowledgeArtifactRepository inMemoryRepository() {
     return new JcrKnowledgeArtifactRepository(new Jcr(new Oak()).createRepository(), cfg);
   }
 
