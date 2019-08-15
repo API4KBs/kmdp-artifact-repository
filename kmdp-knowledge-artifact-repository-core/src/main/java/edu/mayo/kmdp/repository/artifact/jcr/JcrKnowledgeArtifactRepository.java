@@ -22,7 +22,6 @@ import edu.mayo.kmdp.id.helper.DatatypeHelper;
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
-import edu.mayo.kmdp.util.ws.ResponseHelper;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,7 +50,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   private KnowledgeArtifactRepositoryServerConfig cfg;
   private HrefBuilder hrefBuilder;
 
-  public JcrDao dao;
+  private JcrDao dao;
 
   //*********************************************************************************************/
   //* Constructors */
