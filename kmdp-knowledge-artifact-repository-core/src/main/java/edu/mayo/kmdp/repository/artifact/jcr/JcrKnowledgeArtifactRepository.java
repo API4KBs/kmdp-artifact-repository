@@ -15,6 +15,7 @@
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
+import static edu.mayo.kmdp.util.ws.ResponseHelper.attempt;
 import static edu.mayo.kmdp.util.ws.ResponseHelper.notSupported;
 import static edu.mayo.kmdp.util.ws.ResponseHelper.succeed;
 
@@ -22,6 +23,7 @@ import edu.mayo.kmdp.id.helper.DatatypeHelper;
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.ResourceIdentificationException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +52,9 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   private KnowledgeArtifactRepositoryServerConfig cfg;
   private HrefBuilder hrefBuilder;
 
+  private String defaultRepositoryId;
+  private String defaultRepositoryName;
+
   private JcrDao dao;
 
   //*********************************************************************************************/
@@ -66,13 +71,15 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     this.cfg = cfg;
     hrefBuilder = new HrefBuilder(cfg);
     this.dao = dao;
+    this.defaultRepositoryId = cfg
+        .getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID);
+    this.defaultRepositoryName = cfg
+        .getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME);
   }
 
   public JcrKnowledgeArtifactRepository(javax.jcr.Repository delegate, Runnable cleanup,
       KnowledgeArtifactRepositoryServerConfig cfg) {
-    this(new JcrDao(delegate,
-        cleanup,
-        cfg), cfg);
+    this(new JcrDao(delegate, cleanup), cfg);
   }
 
   private Optional<KnowledgeArtifactRepository> createRepositoryDescriptor(
@@ -118,7 +125,9 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public ResponseEntity<KnowledgeArtifactRepository> getKnowledgeArtifactRepository(
       String repositoryId) {
-    return notSupported();
+    return attempt(defaultRepositoryId.equals(repositoryId)
+        ? createRepositoryDescriptor(repositoryId, defaultRepositoryName)
+        : Optional.empty());
   }
 
   @Override
@@ -190,7 +199,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public ResponseEntity<Void> deleteKnowledgeArtifact(String repositoryId, UUID artifactId,
       Boolean deleted) {
-    if (deleted) {
+    if ((Boolean.TRUE.equals(deleted))) {
       return notSupported();
     }
     dao.deleteResource(repositoryId, artifactId);
@@ -222,7 +231,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     try (JcrDao.DaoResult<Version> result = dao
         .saveResource(repositoryId, artifactId, versionId, document, params)) {
       URI location = versionToPointer(result.getValue(), repositoryId).getHref();
-      return succeed(location,HttpStatus.CREATED,HttpHeaders::setLocation);
+      return succeed(location, HttpStatus.CREATED, HttpHeaders::setLocation);
     }
   }
 
@@ -238,8 +247,6 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
       Version version = result.getValue();
 
       return succeed(getDataFromNode(version));
-
-      // TODO: set mime type
     }
   }
 
@@ -273,7 +280,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public ResponseEntity<Void> deleteKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
-    if (deleted) {
+    if (Boolean.TRUE.equals(deleted)) {
       return notSupported();
     }
     dao.deleteResource(repositoryId, artifactId, versionTag);
@@ -306,7 +313,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
       return pointer;
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new ResourceIdentificationException(e);
     }
   }
 
@@ -323,7 +330,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
       return pointer;
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new ResourceIdentificationException(e);
     }
   }
 
@@ -332,7 +339,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
       return IOUtils
           .toByteArray(node.getFrozenNode().getProperty(JCR_DATA).getBinary().getStream());
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new ResourceIdentificationException(e);
     }
   }
 

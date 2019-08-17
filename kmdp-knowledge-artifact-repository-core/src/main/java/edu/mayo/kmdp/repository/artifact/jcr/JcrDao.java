@@ -17,7 +17,6 @@ package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static javax.jcr.nodetype.NodeType.MIX_VERSIONABLE;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.ResourceNoContentException;
 import edu.mayo.kmdp.repository.artifact.ResourceNotFoundException;
@@ -56,16 +55,11 @@ public class JcrDao {
   private Runnable cleanup;
 
   public JcrDao(javax.jcr.Repository delegate) {
-    this(delegate, null, new KnowledgeArtifactRepositoryServerConfig());
+    this(delegate, null);
   }
 
-  public JcrDao(javax.jcr.Repository delegate,
-      KnowledgeArtifactRepositoryServerConfig config) {
-    this(delegate, null, config);
-  }
 
-  public JcrDao(javax.jcr.Repository delegate, Runnable cleanup,
-      KnowledgeArtifactRepositoryServerConfig config) {
+  public JcrDao(javax.jcr.Repository delegate, Runnable cleanup) {
     this.delegate = delegate;
     this.cleanup = cleanup;
   }
@@ -80,47 +74,27 @@ public class JcrDao {
 
       session.save();
 
-      return new DaoResult<T>(result, session);
+      return new DaoResult<>(result, session);
     } catch (RepositoryException e) {
-      throw new RuntimeException(e);
+      throw new DaoRuntimeException(e);
     }
   }
 
   public DaoResult<List<Version>> getResourceVersions(String repositoryId,
-      UUID id_, Boolean deleted) {
-    String id = Text.escapeIllegalJcrChars(id_.toString());
+      UUID uuid, Boolean deleted) {
+    String id = Text.escapeIllegalJcrChars(uuid.toString());
 
     return execute((Session session) -> {
       try {
         Node rootNode = session.getRootNode();
         if (artifactSeriesExists(rootNode, repositoryId, id)) {
+
           Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
-          if (!deleted && resource.getProperty(JCR_SERIES_STATUS).getString()
+          if ((Boolean.FALSE.equals(deleted)) && resource.getProperty(JCR_SERIES_STATUS).getString()
               .equals(STATUS_UNAVAILABLE)) {
             throw new ResourceNoContentException("Artifact known, but not available.");
           }
-          VersionHistory history = session.getWorkspace().getVersionManager()
-              .getVersionHistory(resource.getPath());
-          String[] versions = history.getVersionLabels();
-
-          return Arrays.stream(versions)
-              .map(label -> {
-                try {
-                  return history.getVersionByLabel(label);
-                } catch (RepositoryException e) {
-                  throw new RuntimeException(e);
-                }
-              })
-              .filter(version -> {
-                //If deleted != true, filter out unavailable versions
-                try {
-                  return deleted || !versionIsUnavailable(version);
-                } catch (RepositoryException e) {
-                  throw new RuntimeException(e);
-                }
-              })
-
-              .collect(Collectors.toList());
+          return getArtifactVersions(session, resource, deleted);
         } else {
           throw new ResourceNotFoundException();
         }
@@ -129,9 +103,35 @@ public class JcrDao {
         throw e;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
     });
+  }
+
+  private List<Version> getArtifactVersions(Session session, Node resource,
+      Boolean deleted) throws RepositoryException {
+    VersionHistory history = session.getWorkspace().getVersionManager()
+        .getVersionHistory(resource.getPath());
+    String[] versions = history.getVersionLabels();
+
+    return Arrays.stream(versions)
+        .map(label -> {
+          try {
+            return history.getVersionByLabel(label);
+          } catch (RepositoryException e) {
+            throw new DaoRuntimeException(e);
+          }
+        })
+        .filter(version -> {
+          //If deleted != true, filter out unavailable versions
+          try {
+            return deleted || !versionIsUnavailable(version);
+          } catch (RepositoryException e) {
+            throw new DaoRuntimeException(e);
+          }
+        })
+
+        .collect(Collectors.toList());
   }
 
   public DaoResult<Version> getLatestResource(String repositoryId, UUID id, Boolean deleted) {
@@ -147,15 +147,15 @@ public class JcrDao {
         return v2.getCreated().compareTo(v1.getCreated());
       } catch (RepositoryException e) {
         result.close();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
     });
     return new DaoResult<>(versions.get(0), result.getSession());
   }
 
-  public DaoResult<Version> getResource(String repositoryId, UUID id_,
+  public DaoResult<Version> getResource(String repositoryId, UUID uuid,
       String version, boolean getUnavailable) {
-    String id = Text.escapeIllegalJcrChars(id_.toString());
+    String id = Text.escapeIllegalJcrChars(uuid.toString());
 
     return execute((Session session) -> {
       try {
@@ -178,17 +178,17 @@ public class JcrDao {
         throw e;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
     });
   }
 
-  public DaoResult<List<Node>> getResources(String repositoryId_,
+  public DaoResult<List<Node>> getResources(String repositoryId,
       Boolean deleted, Map<String, String> query) {
-    String repositoryId = ISO9075.encodePath(repositoryId_);
+    String encodedRepositoryId = ISO9075.encodePath(repositoryId);
     return execute((Session session) -> {
       try {
-        if (!session.getRootNode().hasNode(repositoryId)) {
+        if (!session.getRootNode().hasNode(encodedRepositoryId)) {
           throw new RepositoryNotFoundException();
         }
         String queryString;
@@ -201,14 +201,15 @@ public class JcrDao {
           queryString = "[" + q + "]";
         }
         QueryResult queryResult = session.getWorkspace().getQueryManager()
-            .createQuery(String.format("//%s/*%s", repositoryId, queryString), "xpath")
+            .createQuery(String.format("//%s/*%s", encodedRepositoryId, queryString), "xpath")
             .execute();
 
         NodeIterator nodes = queryResult.getNodes();
         List<Node> result = new ArrayList<>();
         while (nodes.hasNext()) {
           Node node = nodes.nextNode();
-          if (!deleted && node.hasProperty(JCR_SERIES_STATUS) && node.getProperty(JCR_SERIES_STATUS)
+          if (Boolean.FALSE.equals(deleted) && node.hasProperty(JCR_SERIES_STATUS) && node
+              .getProperty(JCR_SERIES_STATUS)
               .getString().equals(STATUS_UNAVAILABLE)) {
             continue;
           }
@@ -220,14 +221,14 @@ public class JcrDao {
         throw e;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
     });
 
   }
 
-  public void deleteResource(String repositoryId, UUID id_) {
-    String id = Text.escapeIllegalJcrChars(id_.toString());
+  public void deleteResource(String repositoryId, UUID uuid) {
+    String id = Text.escapeIllegalJcrChars(uuid.toString());
 
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
@@ -258,16 +259,17 @@ public class JcrDao {
         throw e;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
 
       return null;
     })) {
+      //nothing to do here
     }
   }
 
-  public void deleteResource(String repositoryId, UUID id_, String version) {
-    String id = Text.escapeIllegalJcrChars(id_.toString());
+  public void deleteResource(String repositoryId, UUID uuid, String version) {
+    String id = Text.escapeIllegalJcrChars(uuid.toString());
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         VersionManager versionManager = session.getWorkspace().getVersionManager();
@@ -293,9 +295,10 @@ public class JcrDao {
         throw e;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
     })) {
+      // nothing to do
     }
   }
 
@@ -304,10 +307,10 @@ public class JcrDao {
     saveResource(repositoryId, id, version, payload, new HashMap<>());
   }
 
-  public DaoResult<Version> saveResource(String repositoryId, UUID id_,
+  public DaoResult<Version> saveResource(String repositoryId, UUID uuid,
       String version,
       byte[] payload, Map<String, String> metadata) {
-    String id = Text.escapeIllegalJcrChars(id_.toString());
+    String id = Text.escapeIllegalJcrChars(uuid.toString());
 
     return execute((Session session) -> {
       try {
@@ -338,7 +341,7 @@ public class JcrDao {
             try {
               node.setProperty("jcr:" + key, value);
             } catch (RepositoryException e) {
-              throw new RuntimeException(e);
+              throw new DaoRuntimeException(e);
             }
           });
         }
@@ -350,13 +353,13 @@ public class JcrDao {
         return newNode;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
     });
   }
 
-  public DaoResult<Node> saveResource(String repositoryId, UUID id_) {
-    String id = Text.escapeIllegalJcrChars(id_.toString());
+  public DaoResult<Node> saveResource(String repositoryId, UUID uuid) {
+    String id = Text.escapeIllegalJcrChars(uuid.toString());
 
     return execute((Session session) -> {
       try {
@@ -374,13 +377,13 @@ public class JcrDao {
         return node;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
     });
   }
 
-  public void enableResource(String repositoryId, UUID id_) {
-    String id = Text.escapeIllegalJcrChars(id_.toString());
+  public void enableResource(String repositoryId, UUID uuid) {
+    String id = Text.escapeIllegalJcrChars(uuid.toString());
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         if (session.getRootNode().hasNode(repositoryId)) {
@@ -403,7 +406,7 @@ public class JcrDao {
             }
           } else {
             //If artifact series doesn't exist, create it.
-            saveResource(repositoryId, id_);
+            saveResource(repositoryId, uuid);
           }
         } else {
           session.logout();
@@ -413,15 +416,16 @@ public class JcrDao {
         throw e;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
       return null;
     })) {
+      // nothing to do
     }
   }
 
-  public void enableResource(String repositoryId, UUID id_, String versionId) {
-    String id = Text.escapeIllegalJcrChars(id_.toString());
+  public void enableResource(String repositoryId, UUID uuid, String versionId) {
+    String id = Text.escapeIllegalJcrChars(uuid.toString());
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         Node rootNode = session.getRootNode();
@@ -448,11 +452,12 @@ public class JcrDao {
         throw e;
       } catch (Exception e) {
         session.logout();
-        throw new RuntimeException(e);
+        throw new DaoRuntimeException(e);
       }
 
       return null;
     })) {
+      // nothing to do
     }
   }
 

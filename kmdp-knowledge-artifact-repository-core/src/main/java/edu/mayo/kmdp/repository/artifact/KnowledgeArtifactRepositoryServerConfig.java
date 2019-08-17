@@ -77,6 +77,8 @@ public class KnowledgeArtifactRepositoryServerConfig extends
             false));
 
 
+    private static final String ID = "default";
+
     private Opt<KnowledgeArtifactRepositoryOptions> opt;
 
     KnowledgeArtifactRepositoryOptions(Opt<KnowledgeArtifactRepositoryOptions> opt) {
@@ -95,7 +97,7 @@ public class KnowledgeArtifactRepositoryServerConfig extends
     }
 
     private static String getDefaultRepositoryId() {
-      return "default";
+      return ID;
     }
 
     private static String getBaseNamespace() {

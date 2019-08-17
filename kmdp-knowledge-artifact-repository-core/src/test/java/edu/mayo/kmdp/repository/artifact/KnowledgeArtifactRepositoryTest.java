@@ -37,20 +37,12 @@ import org.springframework.http.ResponseEntity;
 
 class KnowledgeArtifactRepositoryTest {
 
-  @TempDir
-  static Path tempDir;
-
   private static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepository repo;
 
   private static KnowledgeArtifactRepositoryServerConfig cfg =
       new KnowledgeArtifactRepositoryServerConfig()
           .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
           .with(DEFAULT_REPOSITORY_ID, "TestRepo");
-
-  private static KnowledgeArtifactRepositoryServerConfig cfg2 =
-      new KnowledgeArtifactRepositoryServerConfig()
-          .with(DEFAULT_REPOSITORY_NAME, "TestRepository2")
-          .with(DEFAULT_REPOSITORY_ID, "TestRepo2");
 
   @BeforeAll
   static void repo() {
@@ -95,10 +87,17 @@ class KnowledgeArtifactRepositoryTest {
   }
 
   @Test
-  void testGetRepositoryWithDefault() {
+  void testGetRepositoryWithNonDefault() {
     ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
         .getKnowledgeArtifactRepository("repository");
-    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
+    assertEquals(HttpStatus.NOT_FOUND, ans.getStatusCode());
+  }
+
+  @Test
+  void testGetRepositoryWithDefault() {
+    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+        .getKnowledgeArtifactRepository("TestRepo");
+    assertEquals(HttpStatus.OK, ans.getStatusCode());
   }
 
   @Test
