@@ -50,9 +50,6 @@ import org.springframework.http.ResponseEntity;
 
 class JcrKnowledgeArtifactRepositoryTest {
 
-  @TempDir
-  Path tempDir;
-
   private JcrKnowledgeArtifactRepository adapter;
   private JcrDao dao;
 

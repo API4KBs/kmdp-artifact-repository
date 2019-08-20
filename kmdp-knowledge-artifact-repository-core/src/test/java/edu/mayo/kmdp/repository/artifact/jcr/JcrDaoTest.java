@@ -41,9 +41,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 class JcrDaoTest {
 
-  @TempDir
-  Path tempDir;
-
   private JcrDao dao;
 
   private UUID artifactUUID;
@@ -51,13 +48,9 @@ class JcrDaoTest {
 
   @BeforeEach
   void repo() {
-    KnowledgeArtifactRepositoryServerConfig cfg =
-        new KnowledgeArtifactRepositoryServerConfig().with(
-            KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID, "1");
-
     Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
 
-    dao = new JcrDao(jcr, cfg);
+    dao = new JcrDao(jcr);
     artifactUUID = UUID.randomUUID();
     artifactUUID2 = UUID.randomUUID();
   }

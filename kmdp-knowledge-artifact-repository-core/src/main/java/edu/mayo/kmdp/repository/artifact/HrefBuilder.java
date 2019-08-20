@@ -22,10 +22,8 @@ import org.omg.spec.api4kp._1_0.services.URIPathHelper;
 public class HrefBuilder {
 
   private String host;
-  private KnowledgeArtifactRepositoryServerConfig cfg;
 
   public HrefBuilder(KnowledgeArtifactRepositoryServerConfig cfg) {
-    this.cfg = cfg;
     this.host = StringUtils
         .removeEnd(cfg.getTyped(
             KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.SERVER_HOST)
