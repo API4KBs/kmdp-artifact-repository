@@ -26,6 +26,7 @@ import org.apache.jackrabbit.oak.segment.SegmentNodeStoreBuilders;
 import org.apache.jackrabbit.oak.segment.file.FileStore;
 import org.apache.jackrabbit.oak.segment.file.FileStoreBuilder;
 import org.apache.jackrabbit.oak.segment.file.InvalidFileStoreVersionException;
+import org.omg.spec.api4kp._1_0.services.KPServer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +40,7 @@ public class RepositoryComponentConfig {
 
   @Bean
   @Profile("default")
+  @KPServer
   public KnowledgeArtifactRepository repository() throws InvalidFileStoreVersionException, IOException {
     File dataDir = cfg.getTyped(
         KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.BASE_DIR);
@@ -57,6 +59,7 @@ public class RepositoryComponentConfig {
 
   @Bean
   @Profile("inmemory")
+  @KPServer
   public KnowledgeArtifactRepository inMemoryRepository() {
     return new JcrKnowledgeArtifactRepository(new Jcr(new Oak()).createRepository(), cfg);
   }
