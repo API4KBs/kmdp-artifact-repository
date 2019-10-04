@@ -1,10 +1,12 @@
 language: java
-cache:
-  directories:
-  - "$HOME/.m2"
+jdk:
+  - oraclejdk8
+dist: trusty
+install: true
+script: mvn clean install -Ppublic -q
 deploy:
   provider: script
-  script: mvn deploy -s .travis.settings.xml
+  script: mvn deploy -DskipTests -Ppublic -s .travis.settings.xml -q
   skip_cleanup: true
 env:
   global:
