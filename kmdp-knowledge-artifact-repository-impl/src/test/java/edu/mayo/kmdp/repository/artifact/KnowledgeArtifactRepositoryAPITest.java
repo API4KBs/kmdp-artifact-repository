@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import edu.mayo.kmdp.repository.artifact.client.ApiClientFactory;
 import edu.mayo.kmdp.util.ws.JsonRestWSUtils.WithFHIR;
-import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCode;
+import edu.mayo.ontology.taxonomies.api4kp.responsecodes._2011.ResponseCode;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.omg.spec.api4kp._1_0.Answer;
