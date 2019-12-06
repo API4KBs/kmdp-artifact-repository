@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.mayo.kmdp.repository.artifact;
+package edu.mayo.kmdp.repository.artifact.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(code = HttpStatus.NOT_FOUND)
-public class ResourceNotFoundException extends RuntimeException {
+@ResponseStatus(code = HttpStatus.NO_CONTENT)
+public class ResourceNoContentException extends RuntimeException {
 
-  public ResourceNotFoundException() {
-    super("Repository or Artifact Version not found");
+  public ResourceNoContentException(String message) {
+    super(message);
   }
 
 }

@@ -23,7 +23,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.Properties;
 
-
+@SuppressWarnings("unchecked")
 public class KnowledgeArtifactRepositoryServerConfig extends
     ConfigProperties<KnowledgeArtifactRepositoryServerConfig, KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions> {
 

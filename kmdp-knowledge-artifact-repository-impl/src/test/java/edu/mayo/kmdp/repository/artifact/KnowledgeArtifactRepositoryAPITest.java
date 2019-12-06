@@ -18,9 +18,12 @@ package edu.mayo.kmdp.repository.artifact;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import edu.mayo.kmdp.repository.artifact.client.ApiClientFactory;
+import edu.mayo.kmdp.repository.artifact.v3.KnowledgeArtifactApi;
+import edu.mayo.kmdp.repository.artifact.v3.KnowledgeArtifactRepositoryApi;
+import edu.mayo.kmdp.repository.artifact.v3.KnowledgeArtifactSeriesApi;
+import edu.mayo.kmdp.repository.artifact.v3.client.ApiClientFactory;
 import edu.mayo.kmdp.util.ws.JsonRestWSUtils.WithFHIR;
-import edu.mayo.ontology.taxonomies.api4kp.responsecodes._2011.ResponseCode;
+import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.omg.spec.api4kp._1_0.Answer;
@@ -29,18 +32,19 @@ import org.omg.spec.api4kp._1_0.identifiers.Pointer;
 
 public class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
 
-  private ApiClientFactory webClientFactory = new ApiClientFactory("http://localhost:11111", WithFHIR.NONE);
+  private ApiClientFactory webClientFactory = new ApiClientFactory("http://localhost:8080", WithFHIR.NONE);
 
   protected KnowledgeArtifactRepositoryApi repoApi = KnowledgeArtifactRepositoryApi.newInstance(webClientFactory);
   protected KnowledgeArtifactApi artApi = KnowledgeArtifactApi.newInstance(webClientFactory);
   protected KnowledgeArtifactSeriesApi seriesApi = KnowledgeArtifactSeriesApi.newInstance(webClientFactory);
 
 
- @Test
+  @Test
   public void testListArtifactsOnNonexistingRepo() {
-    Answer<List<Pointer>> artifacts = seriesApi.listKnowledgeArtifacts("missing",0,-1,false);
+    Answer<List<Pointer>> artifacts = seriesApi
+        .listKnowledgeArtifacts("missing",0,-1,false);
     assertFalse(artifacts.isSuccess());
-    assertEquals(ResponseCode.NotFound, artifacts.getOutcomeType());
+    assertEquals(ResponseCodeSeries.NotFound, artifacts.getOutcomeType());
   }
 
 }

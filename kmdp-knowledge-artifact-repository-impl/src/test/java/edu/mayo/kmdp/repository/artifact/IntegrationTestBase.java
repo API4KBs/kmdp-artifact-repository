@@ -20,43 +20,32 @@ import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServe
 
 import edu.mayo.kmdp.repository.artifact.IntegrationTestBase.IntegrationTestConfig;
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
-import edu.mayo.kmdp.repository.artifact.server.Swagger2SpringBoot;
+import edu.mayo.kmdp.repository.artifact.v3.server.Swagger2SpringBoot;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.ExitCodeGenerator;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.omg.spec.api4kp._1_0.services.KPServer;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.TestPropertySource;
 
-@ExtendWith(SpringExtension.class)
+
+
+@ActiveProfiles("test")
+@SpringBootTest(
+    webEnvironment = WebEnvironment.DEFINED_PORT,
+    classes = Swagger2SpringBoot.class)
 @ContextConfiguration(classes = IntegrationTestConfig.class)
 public abstract class IntegrationTestBase {
 
-  private static ConfigurableApplicationContext ctx;
-
-  @BeforeAll
-  public static void setupServer() {
-    SpringApplication app = new SpringApplication(Swagger2SpringBoot.class);
-    ctx = app.run();
-  }
-
-  @AfterAll
-  public static void stopServer() {
-    SpringApplication.exit(ctx, (ExitCodeGenerator) () -> 0);
-  }
-
   @Configuration
-  @ComponentScan(basePackages = {"edu.mayo.kmdp.repository.artifact"})
-  @PropertySource(value={"classpath:application.test.properties"})
+  @ComponentScan(basePackageClasses = {KnowledgeArtifactRepositoryService.class})
+  @TestPropertySource(value={"classpath:application.test.properties"})
   public static class IntegrationTestConfig {
 
     private static KnowledgeArtifactRepositoryServerConfig cfg =
@@ -65,13 +54,13 @@ public abstract class IntegrationTestBase {
             .with(DEFAULT_REPOSITORY_ID, "TestRepo");
 
     @Bean
+    @KPServer
     @Profile("test")
-    public KnowledgeArtifactRepository inMemoryRepository() {
+    public KnowledgeArtifactRepositoryService inMemoryRepository() {
       return new JcrKnowledgeArtifactRepository(
           new Jcr(new Oak()).createRepository(),
           cfg);
     }
-
   }
 
 }

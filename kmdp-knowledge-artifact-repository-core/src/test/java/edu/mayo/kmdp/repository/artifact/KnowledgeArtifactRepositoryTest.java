@@ -1,17 +1,15 @@
 /**
  * Copyright © 2018 Mayo Clinic (RSTKNOWLEDGEMGMT@mayo.edu)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package edu.mayo.kmdp.repository.artifact;
 
@@ -21,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import edu.mayo.kmdp.repository.artifact.jcr.JcrDao;
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
-import java.nio.file.Path;
+import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
 import java.util.List;
 import javax.jcr.Repository;
 import org.apache.jackrabbit.oak.Oak;
@@ -30,14 +28,12 @@ import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.omg.spec.api4kp._1_0.Answer;
 import org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 class KnowledgeArtifactRepositoryTest {
 
-  private static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepository repo;
+  private static KnowledgeArtifactRepositoryService repo;
 
   private static KnowledgeArtifactRepositoryServerConfig cfg =
       new KnowledgeArtifactRepositoryServerConfig()
@@ -60,51 +56,51 @@ class KnowledgeArtifactRepositoryTest {
 
   @Test
   void testListRepositoryWithDefault() {
-    ResponseEntity<List<KnowledgeArtifactRepository>> ans = repo
+    Answer<List<KnowledgeArtifactRepository>> ans = repo
         .listKnowledgeArtifactRepositories();
-    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
+    assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 
   @Test
   void testSetRepositoryWithDefault() {
-    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+    Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
         .setKnowledgeArtifactRepository("repository", new KnowledgeArtifactRepository());
-    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
+    assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 
   @Test
   void testInitRepositoryWithDefault() {
-    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+    Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
         .initKnowledgeArtifactRepository();
-    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
+    assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 
   @Test
   void testIsRepositoryWithDefault() {
-    ResponseEntity<Void> ans = repo
+    Answer<Void> ans = repo
         .isKnowledgeArtifactRepository("repository");
-    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
+    assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 
   @Test
   void testGetRepositoryWithNonDefault() {
-    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+    Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
         .getKnowledgeArtifactRepository("repository");
-    assertEquals(HttpStatus.NOT_FOUND, ans.getStatusCode());
+    assertEquals(ResponseCodeSeries.NotFound, ans.getOutcomeType());
   }
 
   @Test
   void testGetRepositoryWithDefault() {
-    ResponseEntity<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+    Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
         .getKnowledgeArtifactRepository("TestRepo");
-    assertEquals(HttpStatus.OK, ans.getStatusCode());
+    assertEquals(ResponseCodeSeries.OK, ans.getOutcomeType());
   }
 
   @Test
   void testDisableRepositoryWithDefault() {
-    ResponseEntity<Void> ans = repo
+    Answer<Void> ans = repo
         .disableKnowledgeArtifactRepository("repository");
-    assertEquals(HttpStatus.NOT_IMPLEMENTED, ans.getStatusCode());
+    assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 
 }
