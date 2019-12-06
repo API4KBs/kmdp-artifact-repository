@@ -41,7 +41,7 @@ public class RepositoryComponentConfig {
   @Bean
   @Profile("default")
   @KPServer
-  public KnowledgeArtifactRepository repository() throws InvalidFileStoreVersionException, IOException {
+  public KnowledgeArtifactRepositoryService repository() throws InvalidFileStoreVersionException, IOException {
     File dataDir = cfg.getTyped(
         KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.BASE_DIR);
     if (!dataDir.exists()) {
@@ -60,7 +60,7 @@ public class RepositoryComponentConfig {
   @Bean
   @Profile("inmemory")
   @KPServer
-  public KnowledgeArtifactRepository inMemoryRepository() {
+  public KnowledgeArtifactRepositoryService inMemoryRepository() {
     return new JcrKnowledgeArtifactRepository(new Jcr(new Oak()).createRepository(), cfg);
   }
 

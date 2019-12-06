@@ -17,9 +17,9 @@ package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static javax.jcr.nodetype.NodeType.MIX_VERSIONABLE;
 
-import edu.mayo.kmdp.repository.artifact.RepositoryNotFoundException;
-import edu.mayo.kmdp.repository.artifact.ResourceNoContentException;
-import edu.mayo.kmdp.repository.artifact.ResourceNotFoundException;
+import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
+import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
+import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
