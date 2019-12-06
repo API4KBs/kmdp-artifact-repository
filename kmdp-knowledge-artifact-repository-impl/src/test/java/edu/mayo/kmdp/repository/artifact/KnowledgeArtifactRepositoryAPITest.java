@@ -18,7 +18,10 @@ package edu.mayo.kmdp.repository.artifact;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import edu.mayo.kmdp.repository.artifact.client.ApiClientFactory;
+import edu.mayo.kmdp.repository.artifact.v3.KnowledgeArtifactApi;
+import edu.mayo.kmdp.repository.artifact.v3.KnowledgeArtifactRepositoryApi;
+import edu.mayo.kmdp.repository.artifact.v3.KnowledgeArtifactSeriesApi;
+import edu.mayo.kmdp.repository.artifact.v3.client.ApiClientFactory;
 import edu.mayo.kmdp.util.ws.JsonRestWSUtils.WithFHIR;
 import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
 import java.util.List;
