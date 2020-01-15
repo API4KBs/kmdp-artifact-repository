@@ -26,6 +26,7 @@ import org.apache.jackrabbit.oak.jcr.Jcr;
 import org.omg.spec.api4kp._1_0.services.KPServer;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -38,10 +39,13 @@ import org.springframework.test.context.TestPropertySource;
 
 @ActiveProfiles("test")
 @SpringBootTest(
-    webEnvironment = WebEnvironment.DEFINED_PORT,
+    webEnvironment = WebEnvironment.RANDOM_PORT,
     classes = Swagger2SpringBoot.class)
 @ContextConfiguration(classes = IntegrationTestConfig.class)
 public abstract class IntegrationTestBase {
+
+  @LocalServerPort
+  int port;
 
   @Configuration
   @ComponentScan(basePackageClasses = {KnowledgeArtifactRepositoryService.class})
