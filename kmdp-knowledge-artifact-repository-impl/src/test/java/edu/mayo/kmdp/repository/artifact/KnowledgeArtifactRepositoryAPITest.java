@@ -25,24 +25,31 @@ import edu.mayo.kmdp.repository.artifact.v3.client.ApiClientFactory;
 import edu.mayo.kmdp.util.ws.JsonRestWSUtils.WithFHIR;
 import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.omg.spec.api4kp._1_0.Answer;
 import org.omg.spec.api4kp._1_0.identifiers.Pointer;
 
-
 public class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
 
-  private ApiClientFactory webClientFactory = new ApiClientFactory("http://localhost:8080", WithFHIR.NONE);
+  private ApiClientFactory webClientFactory;
 
-  protected KnowledgeArtifactRepositoryApi repoApi = KnowledgeArtifactRepositoryApi.newInstance(webClientFactory);
-  protected KnowledgeArtifactApi artApi = KnowledgeArtifactApi.newInstance(webClientFactory);
-  protected KnowledgeArtifactSeriesApi seriesApi = KnowledgeArtifactSeriesApi.newInstance(webClientFactory);
+  protected KnowledgeArtifactRepositoryApi repoApi;
+  protected KnowledgeArtifactApi artApi;
+  protected KnowledgeArtifactSeriesApi seriesApi;
 
+  @BeforeEach
+  void init() {
+    webClientFactory = new ApiClientFactory("http://localhost:" + port, WithFHIR.NONE);
+    repoApi = KnowledgeArtifactRepositoryApi.newInstance(webClientFactory);
+    artApi = KnowledgeArtifactApi.newInstance(webClientFactory);
+    seriesApi = KnowledgeArtifactSeriesApi.newInstance(webClientFactory);
+  }
 
   @Test
   public void testListArtifactsOnNonexistingRepo() {
     Answer<List<Pointer>> artifacts = seriesApi
-        .listKnowledgeArtifacts("missing",0,-1,false);
+        .listKnowledgeArtifacts("missing");
     assertFalse(artifacts.isSuccess());
     assertEquals(ResponseCodeSeries.NotFound, artifacts.getOutcomeType());
   }
