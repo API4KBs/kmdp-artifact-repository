@@ -18,11 +18,10 @@ package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static org.omg.spec.api4kp._1_0.Answer.unsupported;
 
-import edu.mayo.kmdp.id.helper.DatatypeHelper;
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceIdentificationException;
 import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
 import java.net.URI;
@@ -38,8 +37,8 @@ import javax.jcr.version.Version;
 import org.apache.commons.io.IOUtils;
 import org.omg.spec.api4kp._1_0.Answer;
 import org.omg.spec.api4kp._1_0.PlatformComponentHelper;
-import org.omg.spec.api4kp._1_0.identifiers.Pointer;
-import org.omg.spec.api4kp._1_0.identifiers.URIIdentifier;
+import org.omg.spec.api4kp._1_0.id.Pointer;
+import org.omg.spec.api4kp._1_0.id.SemanticIdentifier;
 import org.omg.spec.api4kp._1_0.services.KPServer;
 import org.springframework.beans.factory.DisposableBean;
 
@@ -302,16 +301,12 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   private Pointer versionToPointer(Version version, String repositoryId) {
     try {
       String artifactId = version.getFrozenNode().getProperty("jcr:id").getString();
-      String label = version.getContainingHistory().getVersionLabels(version)[0];
+      String versionTag = version.getContainingHistory().getVersionLabels(version)[0];
 
-      Pointer pointer = new org.omg.spec.api4kp._1_0.identifiers.resources.Pointer();
-      pointer.setHref(hrefBuilder.getArtifactHref(artifactId, label, repositoryId));
-
-      URIIdentifier id = DatatypeHelper
-          .uri(cfg.getTyped(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE), artifactId, label);
-      pointer.setEntityRef(id);
-
-      return pointer;
+      return (Pointer) SemanticIdentifier.newIdAsPointer(
+          URI.create(cfg.getTyped(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE)),
+          artifactId, "",
+          versionTag, hrefBuilder.getArtifactHref(artifactId, versionTag, repositoryId));
     } catch (Exception e) {
       throw new ResourceIdentificationException(e);
     }
@@ -320,13 +315,8 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   private Pointer artifactToPointer(Node node, String repositoryId) {
     try {
       String artifactId = node.getProperty("jcr:id").getString();
-
-      Pointer pointer = new org.omg.spec.api4kp._1_0.identifiers.resources.Pointer();
-      pointer.setHref(hrefBuilder.getSeriesHref(artifactId, repositoryId));
-
-      URIIdentifier id = DatatypeHelper
-          .uri("UUID:" + artifactId);
-      pointer.setEntityRef(id);
+      Pointer pointer = (Pointer) SemanticIdentifier.newIdAsPointer(artifactId);
+      pointer.withHref(hrefBuilder.getSeriesHref(artifactId, repositoryId));
 
       return pointer;
     } catch (Exception e) {
