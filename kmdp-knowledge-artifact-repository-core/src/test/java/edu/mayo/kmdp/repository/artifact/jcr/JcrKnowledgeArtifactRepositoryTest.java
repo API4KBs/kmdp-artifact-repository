@@ -15,10 +15,12 @@
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
+import static edu.mayo.kmdp.registry.Registry.BASE_UUID_URN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import edu.mayo.kmdp.registry.Registry;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
@@ -43,7 +45,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.omg.spec.api4kp._1_0.Answer;
-import org.omg.spec.api4kp._1_0.identifiers.Pointer;
+import org.omg.spec.api4kp._1_0.id.Pointer;
 import org.springframework.http.HttpHeaders;
 
 class JcrKnowledgeArtifactRepositoryTest {
@@ -205,8 +207,8 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("UUID:" + artifactID,
-        result.get(0).getEntityRef().getUri().toString());
+    assertEquals(BASE_UUID_URN + artifactID,
+        result.get(0).getResourceId().toString());
   }
 
   @Test
