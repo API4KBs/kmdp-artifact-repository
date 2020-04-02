@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.mayo.kmdp.registry.Registry;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
