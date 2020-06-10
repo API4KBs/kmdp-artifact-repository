@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>kmdp-knowledge-artifact-repository</artifactId>
-  <version>3.7.1-SNAPSHOT</version>
+  <version>3.7.2-SNAPSHOT</version>
 
   <modules>
     <module>kmdp-knowledge-artifact-repository-core</module>
