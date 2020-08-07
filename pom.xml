@@ -12,6 +12,8 @@
   <artifactId>kmdp-knowledge-artifact-repository</artifactId>
   <version>3.7.2-SNAPSHOT</version>
 
+  <name>KMDP :: Service :: Knowledge Artifact Repository</name>
+
   <modules>
     <module>kmdp-knowledge-artifact-repository-core</module>
     <module>kmdp-knowledge-artifact-repository-impl</module>
