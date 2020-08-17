@@ -17,7 +17,7 @@ package edu.mayo.kmdp.repository.artifact;
 
 import java.net.URI;
 import org.apache.commons.lang3.StringUtils;
-import org.omg.spec.api4kp._1_0.services.URIPathHelper;
+import org.omg.spec.api4kp._20200801.services.URIPathHelper;
 
 public class HrefBuilder {
 

@@ -28,8 +28,8 @@ import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.omg.spec.api4kp._1_0.Answer;
-import org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository;
+import org.omg.spec.api4kp._20200801.Answer;
+import org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository;
 
 class KnowledgeArtifactRepositoryTest {
 
@@ -63,14 +63,14 @@ class KnowledgeArtifactRepositoryTest {
 
   @Test
   void testSetRepositoryWithDefault() {
-    Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans = repo
         .setKnowledgeArtifactRepository("repository", new KnowledgeArtifactRepository());
     assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 
   @Test
   void testInitRepositoryWithDefault() {
-    Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans = repo
         .initKnowledgeArtifactRepository();
     assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
@@ -84,14 +84,14 @@ class KnowledgeArtifactRepositoryTest {
 
   @Test
   void testGetRepositoryWithNonDefault() {
-    Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans = repo
         .getKnowledgeArtifactRepository("repository");
     assertEquals(ResponseCodeSeries.NotFound, ans.getOutcomeType());
   }
 
   @Test
   void testGetRepositoryWithDefault() {
-    Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> ans = repo
+    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans = repo
         .getKnowledgeArtifactRepository("TestRepo");
     assertEquals(ResponseCodeSeries.OK, ans.getOutcomeType());
   }

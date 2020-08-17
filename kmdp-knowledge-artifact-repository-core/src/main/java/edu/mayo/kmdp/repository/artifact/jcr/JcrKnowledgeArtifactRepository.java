@@ -16,7 +16,7 @@
 package edu.mayo.kmdp.repository.artifact.jcr;
 
 
-import static org.omg.spec.api4kp._1_0.Answer.unsupported;
+import static org.omg.spec.api4kp._20200801.Answer.unsupported;
 
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
@@ -35,11 +35,11 @@ import java.util.stream.Collectors;
 import javax.jcr.Node;
 import javax.jcr.version.Version;
 import org.apache.commons.io.IOUtils;
-import org.omg.spec.api4kp._1_0.Answer;
-import org.omg.spec.api4kp._1_0.PlatformComponentHelper;
-import org.omg.spec.api4kp._1_0.id.Pointer;
-import org.omg.spec.api4kp._1_0.id.SemanticIdentifier;
-import org.omg.spec.api4kp._1_0.services.KPServer;
+import org.omg.spec.api4kp._20200801.Answer;
+import org.omg.spec.api4kp._20200801.PlatformComponentHelper;
+import org.omg.spec.api4kp._20200801.id.Pointer;
+import org.omg.spec.api4kp._20200801.id.SemanticIdentifier;
+import org.omg.spec.api4kp._20200801.services.KPServer;
 import org.springframework.beans.factory.DisposableBean;
 
 @KPServer
@@ -81,7 +81,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     this(new JcrDao(delegate, cleanup), cfg);
   }
 
-  private Optional<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> createRepositoryDescriptor(
+  private Optional<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> createRepositoryDescriptor(
       String repositoryId, String repositoryName) {
     return PlatformComponentHelper.repositoryDescr(
         cfg.getTyped(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE),
@@ -100,19 +100,19 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   //*********************************************************************************************/
 
   @Override
-  public Answer<List<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository>> listKnowledgeArtifactRepositories() {
+  public Answer<List<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository>> listKnowledgeArtifactRepositories() {
     return unsupported();
   }
 
   @Override
-  public Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> initKnowledgeArtifactRepository() {
+  public Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> initKnowledgeArtifactRepository() {
     return unsupported();
   }
 
   @Override
-  public Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> setKnowledgeArtifactRepository(
+  public Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> setKnowledgeArtifactRepository(
       String repositoryId,
-      org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository repositoryDescr) {
+      org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository repositoryDescr) {
     return unsupported();
   }
 
@@ -122,7 +122,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   }
 
   @Override
-  public Answer<org.omg.spec.api4kp._1_0.services.repository.KnowledgeArtifactRepository> getKnowledgeArtifactRepository(
+  public Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> getKnowledgeArtifactRepository(
       String repositoryId) {
     return Answer.of(defaultRepositoryId.equals(repositoryId)
         ? createRepositoryDescriptor(repositoryId, defaultRepositoryName)
