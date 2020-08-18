@@ -16,11 +16,11 @@
 package edu.mayo.kmdp.repository.artifact;
 
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
-import edu.mayo.kmdp.repository.artifact.v4.server.KnowledgeArtifactApiInternal;
-import edu.mayo.kmdp.repository.artifact.v4.server.KnowledgeArtifactRepositoryApiInternal;
-import edu.mayo.kmdp.repository.artifact.v4.server.KnowledgeArtifactSeriesApiInternal;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
+import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.KnowledgeArtifactApiInternal;
+import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.KnowledgeArtifactRepositoryApiInternal;
+import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.KnowledgeArtifactSeriesApiInternal;
 
 public interface KnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryApiInternal,
     KnowledgeArtifactSeriesApiInternal, KnowledgeArtifactApiInternal {

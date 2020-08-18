@@ -20,9 +20,9 @@ import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServe
 
 import edu.mayo.kmdp.repository.artifact.IntegrationTestBase.IntegrationTestConfig;
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
-import edu.mayo.kmdp.repository.artifact.v4.server.Swagger2SpringBoot;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
+import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.Swagger2SpringBoot;
 import org.omg.spec.api4kp._20200801.services.KPServer;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;

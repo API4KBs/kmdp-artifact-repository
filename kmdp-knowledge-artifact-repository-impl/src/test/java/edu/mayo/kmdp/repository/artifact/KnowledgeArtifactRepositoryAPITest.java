@@ -18,16 +18,16 @@ package edu.mayo.kmdp.repository.artifact;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import edu.mayo.kmdp.repository.artifact.v4.KnowledgeArtifactApi;
-import edu.mayo.kmdp.repository.artifact.v4.KnowledgeArtifactRepositoryApi;
-import edu.mayo.kmdp.repository.artifact.v4.KnowledgeArtifactSeriesApi;
-import edu.mayo.kmdp.repository.artifact.v4.client.ApiClientFactory;
 import edu.mayo.kmdp.util.ws.JsonRestWSUtils.WithFHIR;
 import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.omg.spec.api4kp._20200801.Answer;
+import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifactApi;
+import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifactRepositoryApi;
+import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifactSeriesApi;
+import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.client.ApiClientFactory;
 import org.omg.spec.api4kp._20200801.id.Pointer;
 
 public class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
