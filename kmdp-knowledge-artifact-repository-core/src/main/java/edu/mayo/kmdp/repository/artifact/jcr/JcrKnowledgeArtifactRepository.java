@@ -23,7 +23,7 @@ import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceIdentificationException;
-import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
+import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;

@@ -16,6 +16,10 @@
 package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static edu.mayo.kmdp.registry.Registry.BASE_UUID_URN;
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.Created;
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NoContent;
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotImplemented;
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,7 +30,6 @@ import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
 import edu.mayo.kmdp.util.FileUtil;
-import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -257,7 +260,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .getKnowledgeArtifactSeries("repository", newArtifact)
         .orElse(Collections.emptyList());
 
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals(2, artifacts.size());
     assertEquals(0, versions.size());
   }
@@ -270,7 +273,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     List<Pointer> artifacts = adapter.listKnowledgeArtifacts("repository2")
         .orElse(Collections.emptyList());
     
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals(1, artifacts.size());
   }
 
@@ -315,7 +318,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("1", artifactID);
     Answer<byte[]> response = adapter.getLatestKnowledgeArtifact("1", artifactID, true);
 
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
     assertEquals("newest", new String(response.orElse(new byte[0])));
   }
 
@@ -327,7 +330,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         "newest".getBytes());
     Answer<byte[]> response = adapter.getLatestKnowledgeArtifact("1", artifactID);
 
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
     assertEquals("newest", new String(response.orElse(new byte[0])));
   }
 
@@ -340,7 +343,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("1", artifactID, "LATEST");
     Answer<byte[]> response = adapter.getLatestKnowledgeArtifact("1", artifactID);
 
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
     assertEquals("first", new String(response.orElse(new byte[0])));
   }
 
@@ -353,7 +356,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("1", artifactID, "LATEST");
     Answer<byte[]> response = adapter.getLatestKnowledgeArtifact("1", artifactID, true);
 
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
     assertEquals("second", new String(response.orElse(new byte[0])));
   }
 
@@ -414,7 +417,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.saveResource("repository", artifactID, "new", "document".getBytes());
     Answer<Void> responseEntity = adapter
         .isKnowledgeArtifactSeries("repository", artifactID);
-    assertEquals(ResponseCodeSeries.OK, responseEntity.getOutcomeType());
+    assertEquals(OK, responseEntity.getOutcomeType());
   }
 
   @Test
@@ -423,7 +426,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("repository", artifactID, "new");
     Answer<Void> responseEntity = adapter
         .isKnowledgeArtifactSeries("repository", artifactID);
-    assertEquals(ResponseCodeSeries.OK, responseEntity.getOutcomeType());
+    assertEquals(OK, responseEntity.getOutcomeType());
   }
 
   @Test
@@ -431,7 +434,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.saveResource("repository", artifactID);
     Answer<Void> responseEntity = adapter
         .isKnowledgeArtifactSeries("repository", artifactID);
-    assertEquals(ResponseCodeSeries.OK, responseEntity.getOutcomeType());
+    assertEquals(OK, responseEntity.getOutcomeType());
   }
 
   @Test
@@ -449,7 +452,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("repository", artifactID);
     Answer<Void> responseEntity = adapter
         .isKnowledgeArtifactSeries("repository", artifactID, true);
-    assertEquals(ResponseCodeSeries.OK, responseEntity.getOutcomeType());
+    assertEquals(OK, responseEntity.getOutcomeType());
   }
 
   //"Enable Knowledge Artifact Series"
@@ -472,7 +475,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     List<Pointer> artifacts = adapter.listKnowledgeArtifacts("repositoryId")
         .orElse(Collections.emptyList());
 
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals(2, artifacts.size());
   }
 
@@ -485,7 +488,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     List<Pointer> artifacts = adapter.listKnowledgeArtifacts("repositoryId")
         .orElse(Collections.emptyList());
 
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals(1, artifacts.size());
   }
 
@@ -497,7 +500,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     List<Pointer> artifacts = adapter.listKnowledgeArtifacts("repositoryId")
         .orElse(Collections.emptyList());
 
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals(1, artifacts.size());
   }
 
@@ -513,7 +516,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .getKnowledgeArtifactSeries("repositoryId", artifactID)
         .orElse(Collections.emptyList());
     
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals(2, versions.size());
   }
 
@@ -523,7 +526,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         "hi!".getBytes());
     dao.saveResource("repositoryId", artifactID2);
     Answer<Void> response = adapter.enableKnowledgeArtifact("repositoryId", artifactID2);
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
   }
 
   //"Removes a knowledge artifact from the repository"
@@ -564,7 +567,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         () -> adapter
             .getKnowledgeArtifactSeries("1", artifactID2));
 
-    assertEquals(ResponseCodeSeries.NoContent, responseEntity.getOutcomeType());
+    assertEquals(NoContent, responseEntity.getOutcomeType());
   }
 
   @Test
@@ -579,7 +582,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     Answer<Void> responseEntity = adapter
         .deleteKnowledgeArtifact("1", artifactID2);
 
-    assertEquals(ResponseCodeSeries.NoContent, responseEntity.getOutcomeType());
+    assertEquals(NoContent, responseEntity.getOutcomeType());
   }
 
   @Test
@@ -589,13 +592,13 @@ class JcrKnowledgeArtifactRepositoryTest {
     Answer<Void> responseEntity = adapter
         .deleteKnowledgeArtifact("1", artifactID2);
 
-    assertEquals(ResponseCodeSeries.NoContent, responseEntity.getOutcomeType());
+    assertEquals(NoContent, responseEntity.getOutcomeType());
   }
 
   @Test
   void testRemoveSeriesDeleteParameterNotImplemented() {
     Answer<Void> response = adapter.deleteKnowledgeArtifact("1", artifactID, true);
-    assertEquals(ResponseCodeSeries.NotImplemented, response.getOutcomeType());
+    assertEquals(NotImplemented, response.getOutcomeType());
   }
 
   //"List versions of a Knowledge Artifact"
@@ -709,7 +712,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .getKnowledgeArtifactSeries("1", artifactID);
 
     assertEquals(0, results.orElse(null).size());
-    assertEquals(ResponseCodeSeries.OK, results.getOutcomeType());
+    assertEquals(OK, results.getOutcomeType());
   }
 
   @Test
@@ -733,7 +736,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     Version version = dao.getLatestResource("default", artifactID2, false).getValue();
 
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals("hi!", getPayload(version));
     assertEquals("available", getStatus(version));
   }
@@ -745,7 +748,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     Version version = dao.getLatestResource("default", artifactID2, false).getValue();
 
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals("hi!", getPayload(version));
     assertEquals("available", getStatus(version));
   }
@@ -758,7 +761,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     Version version = dao.getLatestResource("default", artifactID2, false).getValue();
 
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals("hi!", getPayload(version));
     assertEquals("available", getStatus(version));
   }
@@ -770,7 +773,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     Version version = dao.getLatestResource("default", artifactID2, false).getValue();
 
-    assertEquals(ResponseCodeSeries.Created, response.getOutcomeType());
+    assertEquals(Created, response.getOutcomeType());
     assertEquals("hi!", getPayload(version));
     assertEquals("available", getStatus(version));
   }
@@ -798,7 +801,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     Answer<byte[]> response = adapter
         .getKnowledgeArtifactVersion("1", artifactID, "new", false);
     assertEquals("hi!", new String(response.orElse(new byte[0])));
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
   }
 
   @Test
@@ -819,7 +822,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     Answer<byte[]> response = adapter
         .getKnowledgeArtifactVersion("1", artifactID, "new", true);
     assertEquals("hi!", new String(response.orElse(new byte[0])));
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
   }
 
   @Test
@@ -885,7 +888,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.saveResource("repo1", artifactID, "version", "hello".getBytes());
     Answer<Void> response = adapter
         .isKnowledgeArtifactVersion("repo1", artifactID, "version");
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
   }
 
   @Test
@@ -894,7 +897,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("repo1", artifactID, "version");
     Answer<Void> response = adapter
         .isKnowledgeArtifactVersion("repo1", artifactID, "version", true);
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
   }
 
   @Test
@@ -921,7 +924,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("repo1", artifactID);
     Answer<Void> response = adapter
         .isKnowledgeArtifactVersion("repo1", artifactID, "version", true);
-    assertEquals(ResponseCodeSeries.OK, response.getOutcomeType());
+    assertEquals(OK, response.getOutcomeType());
 
   }
 
@@ -962,7 +965,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .enableKnowledgeArtifactVersion("repository", artifactID, "version");
     Answer<List<Pointer>> availableVersions = adapter
         .getKnowledgeArtifactSeries("repository", artifactID);
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
     assertEquals(1, availableVersions.orElse(null).size());
   }
 
@@ -974,7 +977,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .enableKnowledgeArtifactVersion("repository", artifactID, "version", false);
     Answer<List<Pointer>> availableVersions = adapter
         .getKnowledgeArtifactSeries("repository", artifactID);
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
     assertEquals(1, availableVersions.orElse(null).size());
   }
 
@@ -983,7 +986,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.saveResource("repository", artifactID, "version", "thisExists".getBytes());
     Answer<Void> response = adapter
         .enableKnowledgeArtifactVersion("repository", artifactID, "version", false);
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
 
   }
 
@@ -998,7 +1001,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .orElse(new byte[0]);
 
     assertEquals("replaced", new String(replacedArtifact));
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
@@ -1011,7 +1014,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .orElse(new byte[0]);
 
     assertEquals("replaced", new String(replacedArtifact));
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
@@ -1024,7 +1027,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .orElse(new byte[0]);
 
     assertEquals("replaced", new String(replacedArtifact));
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
@@ -1037,7 +1040,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .orElse(new byte[0]);
 
     assertEquals("replaced", new String(replacedArtifact));
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
@@ -1051,7 +1054,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .orElse(new byte[0]);
 
     assertEquals("replaced", new String(replacedArtifact));
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
@@ -1065,7 +1068,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .orElse(new byte[0]);
 
     assertEquals("payload", new String(replacedArtifact));
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
@@ -1078,7 +1081,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .orElse(new byte[0]);
 
     assertEquals("payload", new String(replacedArtifact));
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   // “Remove a specific version of a Knowledge Artifact”
@@ -1090,7 +1093,7 @@ class JcrKnowledgeArtifactRepositoryTest {
         .deleteKnowledgeArtifactVersion("1", artifactID, "new", false);
     Node deletedVersion = dao.getResource("1", artifactID, "new", true).getValue().getFrozenNode();
     assertEquals("unavailable", deletedVersion.getProperty("status").getString());
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
@@ -1123,7 +1126,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("1", artifactID, "new");
     Answer<Void> response = adapter
         .deleteKnowledgeArtifactVersion("1", artifactID, "new");
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
@@ -1132,14 +1135,14 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("1", artifactID);
     Answer<Void> response = adapter
         .deleteKnowledgeArtifactVersion("1", artifactID, "new");
-    assertEquals(ResponseCodeSeries.NoContent, response.getOutcomeType());
+    assertEquals(NoContent, response.getOutcomeType());
   }
 
   @Test
   void testDeleteParameterNotImplemented() {
     Answer<Void> response = adapter
         .deleteKnowledgeArtifactVersion("1", artifactID, "new", true);
-    assertEquals(ResponseCodeSeries.NotImplemented, response.getOutcomeType());
+    assertEquals(NotImplemented, response.getOutcomeType());
   }
 
   String getPayload(Version v) {
