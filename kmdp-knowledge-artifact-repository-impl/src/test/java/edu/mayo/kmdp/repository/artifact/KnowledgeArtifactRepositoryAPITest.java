@@ -15,11 +15,11 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotFound;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import edu.mayo.kmdp.util.ws.JsonRestWSUtils.WithFHIR;
-import edu.mayo.ontology.taxonomies.api4kp.responsecodes.ResponseCodeSeries;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ public class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
     Answer<List<Pointer>> artifacts = seriesApi
         .listKnowledgeArtifacts("missing");
     assertFalse(artifacts.isSuccess());
-    assertEquals(ResponseCodeSeries.NotFound, artifacts.getOutcomeType());
+    assertEquals(NotFound, artifacts.getOutcomeType());
   }
 
 }
