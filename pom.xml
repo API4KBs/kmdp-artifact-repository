@@ -6,11 +6,11 @@
   <parent>
     <groupId>edu.mayo.kmdp</groupId>
     <artifactId>kmdp-artifact-repository-service-base</artifactId>
-    <version>8.0.0</version>
+    <version>8.0.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>kmdp-knowledge-artifact-repository</artifactId>
-  <version>4.8.0</version>
+  <version>4.8.1-SNAPSHOT</version>
 
   <name>KMDP :: Service :: Knowledge Artifact Repository</name>
 
