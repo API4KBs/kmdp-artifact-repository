@@ -17,6 +17,10 @@ package edu.mayo.kmdp.repository.artifact.jcr;
 
 public class DaoRuntimeException extends RuntimeException {
 
+  public DaoRuntimeException(String msg, Exception e) {
+    super(msg, e);
+  }
+
   public DaoRuntimeException(Exception e) {
     super(e);
   }

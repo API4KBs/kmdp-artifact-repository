@@ -18,10 +18,10 @@ package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static org.omg.spec.api4kp._20200801.Answer.unsupported;
 
+import edu.mayo.kmdp.repository.artifact.ClearableKnowledgeArtifactRepositoryService;
 import edu.mayo.kmdp.repository.artifact.HrefBuilder;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceIdentificationException;
 import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.net.URI;
@@ -44,7 +44,7 @@ import org.springframework.beans.factory.DisposableBean;
 
 @KPServer
 public class JcrKnowledgeArtifactRepository implements DisposableBean,
-    KnowledgeArtifactRepositoryService {
+    ClearableKnowledgeArtifactRepositoryService {
 
   private static final String JCR_DATA = "jcr:data";
 
@@ -333,5 +333,8 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     }
   }
 
-
+  @Override
+  public void clear() {
+    this.dao.clear();
+  }
 }

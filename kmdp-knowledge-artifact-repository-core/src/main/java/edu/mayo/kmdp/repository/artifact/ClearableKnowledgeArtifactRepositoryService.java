@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.mayo.kmdp.repository.artifact.exceptions;
+package edu.mayo.kmdp.repository.artifact;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(code = HttpStatus.NOT_FOUND)
-public class RepositoryNotFoundException extends RuntimeException {
+/**
+ * An extension of {@KnowledgeArtifactRepositoryService} that allows for clearing all content.
+ */
+public interface ClearableKnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryService {
 
-  public RepositoryNotFoundException(String id) {
-    super("Repository not found: " + id);
-  }
+  /**
+   * Clears all content.
+   *
+   * !!NOTICE!! This clears all data and is irreversible. This should not be used as a
+   * general-purpose API call, but limited to very specific scenarios (such as clearing
+   * content after integration test).
+   */
+  void clear();
 
 }
+
+

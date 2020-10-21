@@ -17,6 +17,7 @@ package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static javax.jcr.nodetype.NodeType.MIX_VERSIONABLE;
 
+import com.google.common.collect.Sets;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
@@ -26,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -49,6 +51,8 @@ public class JcrDao {
   protected static final String JCR_SERIES_STATUS = "seriesStatus";
   protected static final String STATUS_AVAILABLE = "available";
   protected static final String STATUS_UNAVAILABLE = "unavailable";
+
+  private final Set<String> nodesNotToDelete = Sets.newHashSet("rep:security", "jcr:system", "oak:index");
 
   private javax.jcr.Repository delegate;
 
@@ -82,14 +86,16 @@ public class JcrDao {
 
   public DaoResult<List<Version>> getResourceVersions(String repositoryId,
       UUID uuid, Boolean deleted) {
-    String id = Text.escapeIllegalJcrChars(uuid.toString());
+    String id = this.encode(uuid.toString());
+
+    String encodedRepositoryId = this.encode(repositoryId);
 
     return execute((Session session) -> {
       try {
         Node rootNode = session.getRootNode();
-        if (artifactSeriesExists(rootNode, repositoryId, id)) {
+        if (artifactSeriesExists(rootNode, encodedRepositoryId, id)) {
 
-          Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
+          Node resource = session.getRootNode().getNode(encodedRepositoryId).getNode(id);
           if ((Boolean.FALSE.equals(deleted)) && resource.getProperty(JCR_SERIES_STATUS).getString()
               .equals(STATUS_UNAVAILABLE)) {
             throw new ResourceNoContentException("Artifact known, but not available.");
@@ -155,15 +161,17 @@ public class JcrDao {
 
   public DaoResult<Version> getResource(String repositoryId, UUID uuid,
       String version, boolean getUnavailable) {
-    String id = Text.escapeIllegalJcrChars(uuid.toString());
+    String encodedRepositoryId = this.encode(repositoryId);
+
+    String id = this.encode(uuid.toString());
 
     return execute((Session session) -> {
       try {
         Node rootNode = session.getRootNode();
-        if (!artifactSeriesExists(rootNode, repositoryId, id)) {
+        if (!artifactSeriesExists(rootNode, encodedRepositoryId, id)) {
           throw new ResourceNotFoundException();
         }
-        Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
+        Node resource = session.getRootNode().getNode(encodedRepositoryId).getNode(id);
         VersionHistory history = session.getWorkspace().getVersionManager()
             .getVersionHistory(resource.getPath());
         if (!history.hasVersionLabel(version)) {
@@ -185,23 +193,25 @@ public class JcrDao {
 
   public DaoResult<List<Node>> getResources(String repositoryId,
       Boolean deleted, Map<String, String> query) {
-    String encodedRepositoryId = ISO9075.encodePath(repositoryId);
+    String encodedRepositoryId = this.encode(repositoryId);
+
     return execute((Session session) -> {
       try {
         if (!session.getRootNode().hasNode(encodedRepositoryId)) {
-          throw new RepositoryNotFoundException();
+          throw new RepositoryNotFoundException(encodedRepositoryId);
         }
         String queryString;
         if (query.isEmpty()) {
           queryString = "";
         } else {
           String q = query.entrySet().stream()
-              .map(entry -> String.format("jcr:%s='%s'", entry.getKey(), entry.getValue()))
+              .map(entry -> String.format("jcr:%s='%s'",
+                  ISO9075.encode(this.encode(entry.getKey())), this.encode(ISO9075.encode(entry.getValue()))))
               .collect(Collectors.joining(" AND "));
           queryString = "[" + q + "]";
         }
         QueryResult queryResult = session.getWorkspace().getQueryManager()
-            .createQuery(String.format("//%s/*%s", encodedRepositoryId, queryString), "xpath")
+            .createQuery(String.format("//%s/*%s", ISO9075.encode(encodedRepositoryId), queryString), "xpath")
             .execute();
 
         NodeIterator nodes = queryResult.getNodes();
@@ -227,14 +237,20 @@ public class JcrDao {
 
   }
 
+  private String encode(String id) {
+    return Text.escapeIllegalJcrChars(id);
+  }
+
   public void deleteResource(String repositoryId, UUID uuid) {
-    String id = Text.escapeIllegalJcrChars(uuid.toString());
+    String id = this.encode(uuid.toString());
+
+    String encodedRepositoryId = this.encode(repositoryId);
 
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         Node rootNode = session.getRootNode();
-        if (artifactSeriesExists(rootNode, repositoryId, id)) {
-          Node resource = session.getRootNode().getNode(repositoryId).getNode(id);
+        if (artifactSeriesExists(rootNode, encodedRepositoryId, id)) {
+          Node resource = session.getRootNode().getNode(encodedRepositoryId).getNode(id);
           VersionManager versionManager = session.getWorkspace().getVersionManager();
           VersionHistory history = session.getWorkspace().getVersionManager()
               .getVersionHistory(resource.getPath());
@@ -269,13 +285,16 @@ public class JcrDao {
   }
 
   public void deleteResource(String repositoryId, UUID uuid, String version) {
-    String id = Text.escapeIllegalJcrChars(uuid.toString());
+    String id = this.encode(uuid.toString());
+
+    String encodedRepositoryId = this.encode(repositoryId);
+
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         VersionManager versionManager = session.getWorkspace().getVersionManager();
         Node rootNode = session.getRootNode();
-        if (artifactSeriesExists(rootNode, repositoryId, id)) {
-          Node node = session.getRootNode().getNode(repositoryId).getNode(id);
+        if (artifactSeriesExists(rootNode, encodedRepositoryId, id)) {
+          Node node = session.getRootNode().getNode(encodedRepositoryId).getNode(id);
           if (versionManager.getVersionHistory(node.getPath()).hasVersionLabel(version)) {
             versionManager.checkout(node.getPath());
             node.setProperty(JCR_STATUS, STATUS_UNAVAILABLE);
@@ -304,23 +323,29 @@ public class JcrDao {
 
   public void saveResource(String repositoryId, UUID id, String version,
       byte[] payload) {
-    saveResource(repositoryId, id, version, payload, new HashMap<>());
+    try (DaoResult<?> ignored = saveResource(repositoryId, id, version, payload, new HashMap<>())) {
+      // nothing to do
+    }
+
   }
 
   public DaoResult<Version> saveResource(String repositoryId, UUID uuid,
       String version,
       byte[] payload, Map<String, String> metadata) {
-    String id = Text.escapeIllegalJcrChars(uuid.toString());
+    String id = this.encode(uuid.toString());
+
+    String encodedRepositoryId = this.encode(repositoryId);
 
     return execute((Session session) -> {
       try {
         VersionManager versionManager = session.getWorkspace().getVersionManager();
 
         // check if repository node exists
-        if (!session.getRootNode().hasNode(repositoryId)) {
-          session.getRootNode().addNode(repositoryId);
+        if (!session.getRootNode().hasNode(encodedRepositoryId)) {
+          session.getRootNode().addNode(encodedRepositoryId);
         }
-        Node assetNode = session.getRootNode().getNode(repositoryId);
+
+        Node assetNode = session.getRootNode().getNode(encodedRepositoryId);
 
         Node node;
         if (assetNode.hasNode(id)) {
@@ -359,15 +384,17 @@ public class JcrDao {
   }
 
   public DaoResult<Node> saveResource(String repositoryId, UUID uuid) {
-    String id = Text.escapeIllegalJcrChars(uuid.toString());
+    String id = this.encode(uuid.toString());
+
+    String encodedRepositoryId = this.encode(repositoryId);
 
     return execute((Session session) -> {
       try {
         // check if repository node exists, if not, add it
-        if (!session.getRootNode().hasNode(repositoryId)) {
-          session.getRootNode().addNode(repositoryId);
+        if (!session.getRootNode().hasNode(encodedRepositoryId)) {
+          session.getRootNode().addNode(encodedRepositoryId);
         }
-        Node assetNode = session.getRootNode().getNode(repositoryId);
+        Node assetNode = session.getRootNode().getNode(encodedRepositoryId);
         Node node = assetNode.addNode(id);
         node.addMixin(MIX_VERSIONABLE);
         node.setProperty("jcr:id", id);
@@ -383,12 +410,15 @@ public class JcrDao {
   }
 
   public void enableResource(String repositoryId, UUID uuid) {
-    String id = Text.escapeIllegalJcrChars(uuid.toString());
+    String id = this.encode(uuid.toString());
+
+    String encodedRepositoryId = this.encode(repositoryId);
+
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
-        if (session.getRootNode().hasNode(repositoryId)) {
-          if (session.getRootNode().getNode(repositoryId).hasNode(id)) {
-            Node node = session.getRootNode().getNode(repositoryId).getNode(id);
+        if (session.getRootNode().hasNode(encodedRepositoryId)) {
+          if (session.getRootNode().getNode(encodedRepositoryId).hasNode(id)) {
+            Node node = session.getRootNode().getNode(encodedRepositoryId).getNode(id);
             VersionManager versionManager = session.getWorkspace().getVersionManager();
             VersionHistory history = versionManager.getVersionHistory(node.getPath());
             versionManager.checkout(node.getPath());
@@ -406,7 +436,7 @@ public class JcrDao {
             }
           } else {
             //If artifact series doesn't exist, create it.
-            saveResource(repositoryId, uuid);
+            saveResource(encodedRepositoryId, uuid);
           }
         } else {
           session.logout();
@@ -425,12 +455,15 @@ public class JcrDao {
   }
 
   public void enableResource(String repositoryId, UUID uuid, String versionId) {
-    String id = Text.escapeIllegalJcrChars(uuid.toString());
+    String id = this.encode(uuid.toString());
+
+    String encodedRepositoryId = this.encode(repositoryId);
+
     try (DaoResult<?> ignored = execute((Session session) -> {
       try {
         Node rootNode = session.getRootNode();
-        if (artifactSeriesExists(rootNode, repositoryId, id)) {
-          Node node = session.getRootNode().getNode(repositoryId).getNode(id);
+        if (artifactSeriesExists(rootNode, encodedRepositoryId, id)) {
+          Node node = session.getRootNode().getNode(encodedRepositoryId).getNode(id);
           VersionManager versionManager = session.getWorkspace().getVersionManager();
           if (!versionManager.getVersionHistory(node.getPath()).hasVersionLabel(versionId)) {
             throw new ResourceNotFoundException();
@@ -465,14 +498,36 @@ public class JcrDao {
     return version.getFrozenNode().getProperty(JCR_STATUS).getString().equals(STATUS_UNAVAILABLE);
   }
 
-  private boolean artifactSeriesExists(Node rootNode, String repositoryId, String artifactId)
+  private boolean artifactSeriesExists(Node rootNode, String encodedRepositoryId, String artifactId)
       throws RepositoryException {
-    return rootNode.hasNode(repositoryId) && rootNode.getNode(repositoryId).hasNode(artifactId);
+    return rootNode.hasNode(encodedRepositoryId) && rootNode.getNode(encodedRepositoryId).hasNode(artifactId);
   }
 
   protected void shutdown() {
     if (cleanup != null) {
       cleanup.run();
+    }
+  }
+
+  public void clear() {
+    try (DaoResult<?> ignored = this.execute(session -> {
+      try {
+        NodeIterator itr = session.getRootNode().getNodes();
+
+        while (itr.hasNext()) {
+          Node node = itr.nextNode();
+
+          if (! this.nodesNotToDelete.contains(node.getName())) {
+            node.remove();
+          }
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      return null;
+    })) {
+      // nothing to do
     }
   }
 
@@ -499,4 +554,5 @@ public class JcrDao {
       return session;
     }
   }
+
 }
