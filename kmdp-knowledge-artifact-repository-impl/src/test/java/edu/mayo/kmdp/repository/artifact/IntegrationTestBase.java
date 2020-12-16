@@ -52,7 +52,7 @@ public abstract class IntegrationTestBase {
   @TestPropertySource(value={"classpath:application.test.properties"})
   public static class IntegrationTestConfig {
 
-    private static KnowledgeArtifactRepositoryServerConfig cfg =
+    static KnowledgeArtifactRepositoryServerConfig cfg =
         new KnowledgeArtifactRepositoryServerConfig()
             .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
             .with(DEFAULT_REPOSITORY_ID, "TestRepo");

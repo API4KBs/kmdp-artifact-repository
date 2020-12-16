@@ -16,16 +16,19 @@ package edu.mayo.kmdp.repository.artifact;
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.mayo.kmdp.repository.artifact.jcr.JcrDao;
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
 import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
+import java.util.Collections;
 import java.util.List;
 import javax.jcr.Repository;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
 import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.omg.spec.api4kp._20200801.Answer;
@@ -58,7 +61,11 @@ class KnowledgeArtifactRepositoryTest {
   void testListRepositoryWithDefault() {
     Answer<List<KnowledgeArtifactRepository>> ans = repo
         .listKnowledgeArtifactRepositories();
-    assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
+    assertTrue(ans.isSuccess());
+    assertEquals(1, ans.orElse(Collections.emptyList()).size());
+
+    KnowledgeArtifactRepository descr = ans.map(l -> l.get(0)).orElseGet(Assertions::fail);
+    assertTrue(descr.isDefaultRepository());
   }
 
   @Test

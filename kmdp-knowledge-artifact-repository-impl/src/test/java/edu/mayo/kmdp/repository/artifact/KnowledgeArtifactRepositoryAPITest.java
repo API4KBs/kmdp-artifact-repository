@@ -15,12 +15,16 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotFound;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import edu.mayo.kmdp.util.ws.JsonRestWSUtils.WithFHIR;
+import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.omg.spec.api4kp._20200801.Answer;
@@ -29,8 +33,9 @@ import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifac
 import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifactSeriesApi;
 import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.client.ApiClientFactory;
 import org.omg.spec.api4kp._20200801.id.Pointer;
+import org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository;
 
-public class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
+class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
 
   private ApiClientFactory webClientFactory;
 
@@ -47,11 +52,25 @@ public class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
   }
 
   @Test
-  public void testListArtifactsOnNonexistingRepo() {
+  void testListArtifactsOnNonexistingRepo() {
     Answer<List<Pointer>> artifacts = seriesApi
         .listKnowledgeArtifacts("missing");
     assertFalse(artifacts.isSuccess());
     assertEquals(NotFound, artifacts.getOutcomeType());
+  }
+
+  @Test
+  void testGetDefaultRepositoryID() {
+    List<KnowledgeArtifactRepository> repos = repoApi.listKnowledgeArtifactRepositories()
+        .orElseGet(Collections::emptyList);
+    assertEquals(1, repos.size());
+    KnowledgeArtifactRepository mainRepo = repos.get(0);
+    assertEquals(
+        IntegrationTestConfig.cfg.get(DEFAULT_REPOSITORY_ID).orElseGet(Assertions::fail),
+        mainRepo.getId().getTag());
+    assertEquals(
+        IntegrationTestConfig.cfg.get(DEFAULT_REPOSITORY_NAME).orElseGet(Assertions::fail),
+        mainRepo.getName());
   }
 
 }

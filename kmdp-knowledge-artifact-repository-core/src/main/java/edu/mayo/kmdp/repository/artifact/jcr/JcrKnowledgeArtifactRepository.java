@@ -16,6 +16,7 @@
 package edu.mayo.kmdp.repository.artifact.jcr;
 
 
+import static java.util.Collections.singletonList;
 import static org.omg.spec.api4kp._20200801.Answer.unsupported;
 
 import edu.mayo.kmdp.repository.artifact.ClearableKnowledgeArtifactRepositoryService;
@@ -40,6 +41,7 @@ import org.omg.spec.api4kp._20200801.PlatformComponentHelper;
 import org.omg.spec.api4kp._20200801.id.Pointer;
 import org.omg.spec.api4kp._20200801.id.SemanticIdentifier;
 import org.omg.spec.api4kp._20200801.services.KPServer;
+import org.omg.spec.api4kp._20200801.services.repository.resources.KnowledgeArtifactRepository;
 import org.springframework.beans.factory.DisposableBean;
 
 @KPServer
@@ -88,7 +90,8 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
         repositoryId,
         repositoryName,
         cfg.getTyped(KnowledgeArtifactRepositoryOptions.SERVER_HOST)
-    );
+    ).map(descr ->
+        descr.withDefaultRepository(defaultRepositoryId.equals(repositoryId)));
   }
 
   public void shutdown() {
@@ -101,7 +104,9 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
   @Override
   public Answer<List<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository>> listKnowledgeArtifactRepositories() {
-    return unsupported();
+    return createRepositoryDescriptor(defaultRepositoryId,defaultRepositoryName)
+        .map(descr -> Answer.of(singletonList(descr)))
+        .orElseGet(Answer::notFound);
   }
 
   @Override
