@@ -21,6 +21,7 @@ import com.google.common.collect.Sets;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,9 +43,12 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.jackrabbit.util.Text;
-import org.apache.jackrabbit.value.BinaryImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JcrDao {
+
+  Logger logger = LoggerFactory.getLogger(JcrDao.class);
 
   protected static final String JCR_DATA = "jcr:data";
   protected static final String JCR_STATUS = "status";
@@ -70,13 +74,23 @@ public class JcrDao {
 
   public <T> DaoResult<T> execute(Function<Session, T> f) {
     try {
+      System.err.print("JCR DAO LOGIN ... ");
+      long t0 = System.currentTimeMillis();
       Session session = delegate.login(
           new SimpleCredentials("admin", "admin".toCharArray())
       );
+      System.err.println("..." + (System.currentTimeMillis() - t0));
 
+      System.err.println("JCR DAO EXEC ... ");
+      long t1 = System.currentTimeMillis();
       T result = f.apply(session);
+      System.err.println("...DONE EXEC " + (System.currentTimeMillis() - t1));
 
+
+      System.err.print("JCR DAO SAVE ... ");
+      long t2 = System.currentTimeMillis();
       session.save();
+      System.err.println("..." + (System.currentTimeMillis() - t2));
 
       return new DaoResult<>(result, session);
     } catch (RepositoryException e) {
@@ -338,8 +352,8 @@ public class JcrDao {
 
     return execute((Session session) -> {
       try {
+        long t0;
         VersionManager versionManager = session.getWorkspace().getVersionManager();
-
         // check if repository node exists
         if (!session.getRootNode().hasNode(encodedRepositoryId)) {
           session.getRootNode().addNode(encodedRepositoryId);
@@ -350,15 +364,23 @@ public class JcrDao {
         Node node;
         if (assetNode.hasNode(id)) {
           node = assetNode.getNode(id);
+
+          t0 = System.currentTimeMillis();
+          System.err.print("\t\tCheckout ... " + node.getPath());
           versionManager.checkout(node.getPath());
+          System.err.println("\t\t " + (System.currentTimeMillis()-t0));
 
         } else {
+          t0 = System.currentTimeMillis();
+          System.err.print("\t\tAddNode ... " + id);
           node = assetNode.addNode(id);
           node.addMixin(MIX_VERSIONABLE);
           node.setProperty("jcr:id", id);
+          System.err.println("\t\t " + (System.currentTimeMillis()-t0));
         }
 
-        node.setProperty(JCR_DATA, new BinaryImpl(payload));
+        node.setProperty(JCR_DATA,
+            session.getValueFactory().createBinary(new ByteArrayInputStream(payload)));
         node.setProperty(JCR_STATUS, STATUS_AVAILABLE);
         node.setProperty(JCR_SERIES_STATUS, STATUS_AVAILABLE);
         if (metadata != null) {
@@ -371,7 +393,12 @@ public class JcrDao {
           });
         }
         session.save();
+
+        t0 = System.currentTimeMillis();
+        System.err.print("\t\tCheckin ... "  + node.getPath());
         Version newNode = versionManager.checkin(node.getPath());
+        System.err.println("\t\t " + (System.currentTimeMillis()-t0));
+
         versionManager.getVersionHistory(node.getPath())
             .addVersionLabel(newNode.getName(), version, true);
 

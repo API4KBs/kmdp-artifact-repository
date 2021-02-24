@@ -36,10 +36,6 @@
       <artifactId>jcr</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.codahale.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
