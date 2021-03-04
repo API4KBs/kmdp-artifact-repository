@@ -19,7 +19,7 @@
 
     <dependency>
       <groupId>edu.mayo.kmdp</groupId>
-      <artifactId>kmdp-knowledge-artifact-repository-core</artifactId>
+      <artifactId>kmdp-knowledge-artifact-repository-oak</artifactId>
       <version>${project.version}</version>
     </dependency>
 

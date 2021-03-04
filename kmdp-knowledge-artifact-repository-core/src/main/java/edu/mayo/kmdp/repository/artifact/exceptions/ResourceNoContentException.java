@@ -15,6 +15,9 @@
  */
 package edu.mayo.kmdp.repository.artifact.exceptions;
 
+import static java.lang.String.format;
+
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -25,4 +28,7 @@ public class ResourceNoContentException extends RuntimeException {
     super(message);
   }
 
+  public ResourceNoContentException(UUID artifactId, String repositoryId) {
+    super(format("No Artifacts associated to %s in Repository %s", artifactId, repositoryId));
+  }
 }

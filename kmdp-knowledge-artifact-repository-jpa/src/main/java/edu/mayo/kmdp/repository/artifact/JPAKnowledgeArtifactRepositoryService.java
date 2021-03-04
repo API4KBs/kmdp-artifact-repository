@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.mayo.kmdp.repository.artifact.jcr;
+package edu.mayo.kmdp.repository.artifact;
 
-public class DaoRuntimeException extends RuntimeException {
+import edu.mayo.kmdp.repository.artifact.jpa.JPAArtifactDAO;
+import edu.mayo.kmdp.repository.artifact.jpa.JPAKnowledgeArtifactRepository;
 
-  public DaoRuntimeException(String msg, Exception e) {
-    super(msg, e);
-  }
+public interface JPAKnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryService {
 
-  public DaoRuntimeException(Exception e) {
-    super(e);
+  static KnowledgeArtifactRepositoryService inMemoryArtifactRepository() {
+    return new JPAKnowledgeArtifactRepository(
+        new JPAArtifactDAO(),
+        new KnowledgeArtifactRepositoryServerConfig());
   }
 
 }
+
+

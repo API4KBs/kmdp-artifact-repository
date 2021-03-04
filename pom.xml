@@ -16,6 +16,8 @@
 
   <modules>
     <module>kmdp-knowledge-artifact-repository-core</module>
+    <module>kmdp-knowledge-artifact-repository-oak</module>
+    <module>kmdp-knowledge-artifact-repository-jpa</module>
     <module>kmdp-knowledge-artifact-repository-impl</module>
   </modules>
 

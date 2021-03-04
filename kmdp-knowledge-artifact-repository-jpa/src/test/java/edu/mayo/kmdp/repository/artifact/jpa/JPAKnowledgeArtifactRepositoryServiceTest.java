@@ -11,50 +11,56 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package edu.mayo.kmdp.repository.artifact;
+package edu.mayo.kmdp.repository.artifact.jpa;
 
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.mayo.kmdp.repository.artifact.jcr.JcrDao;
-import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.util.Collections;
 import java.util.List;
-import javax.jcr.Repository;
-import org.apache.jackrabbit.oak.Oak;
-import org.apache.jackrabbit.oak.jcr.Jcr;
-import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.spec.api4kp._20200801.Answer;
 import org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-class KnowledgeArtifactRepositoryTest {
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@AutoConfigurationPackage
+@ContextConfiguration(classes = TestJPAConfiguration.class)
+class JPAKnowledgeArtifactRepositoryServiceTest {
 
-  private static KnowledgeArtifactRepositoryService repo;
+  @Autowired
+  JPAArtifactDAO dao;
 
-  private static KnowledgeArtifactRepositoryServerConfig cfg =
+  static private JPAKnowledgeArtifactRepository repo;
+
+  private KnowledgeArtifactRepositoryServerConfig cfg =
       new KnowledgeArtifactRepositoryServerConfig()
           .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
           .with(DEFAULT_REPOSITORY_ID, "TestRepo");
 
-  @BeforeAll
-  static void repo() {
-    Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
-
-    JcrDao dao = new JcrDao(jcr);
-    repo = new JcrKnowledgeArtifactRepository(dao, cfg);
+  @BeforeEach
+  void repo() {
+    if (repo == null) {
+      repo = new JPAKnowledgeArtifactRepository(dao, cfg);
+    }
   }
 
   @AfterAll
   static void cleanup() {
-    JcrKnowledgeArtifactRepository jackrabbit = (JcrKnowledgeArtifactRepository) repo;
-    jackrabbit.shutdown();
+    repo.shutdown();
   }
 
   @Test

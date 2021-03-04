@@ -1,74 +1,61 @@
 /**
  * Copyright © 2018 Mayo Clinic (RSTKNOWLEDGEMGMT@mayo.edu)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
-package edu.mayo.kmdp.repository.artifact.jcr;
+package edu.mayo.kmdp.repository.artifact;
 
-
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.omg.spec.api4kp._20200801.Answer.unsupported;
 
-import edu.mayo.kmdp.repository.artifact.ClearableKnowledgeArtifactRepositoryService;
-import edu.mayo.kmdp.repository.artifact.HrefBuilder;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.dao.Artifact;
+import edu.mayo.kmdp.repository.artifact.dao.ArtifactDAO;
+import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
+import edu.mayo.kmdp.repository.artifact.dao.DaoResult;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceIdentificationException;
 import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.jcr.Node;
-import javax.jcr.version.Version;
-import org.apache.commons.io.IOUtils;
 import org.omg.spec.api4kp._20200801.Answer;
 import org.omg.spec.api4kp._20200801.PlatformComponentHelper;
 import org.omg.spec.api4kp._20200801.id.Pointer;
+import org.omg.spec.api4kp._20200801.id.ResourceIdentifier;
 import org.omg.spec.api4kp._20200801.id.SemanticIdentifier;
-import org.omg.spec.api4kp._20200801.services.KPServer;
-import org.omg.spec.api4kp._20200801.services.repository.resources.KnowledgeArtifactRepository;
 import org.springframework.beans.factory.DisposableBean;
 
-@KPServer
-public class JcrKnowledgeArtifactRepository implements DisposableBean,
+
+public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     ClearableKnowledgeArtifactRepositoryService {
 
-  private static final String JCR_DATA = "jcr:data";
+  protected KnowledgeArtifactRepositoryServerConfig cfg;
+  protected HrefBuilder hrefBuilder;
 
-  private KnowledgeArtifactRepositoryServerConfig cfg;
-  private HrefBuilder hrefBuilder;
+  protected String defaultRepositoryId;
+  protected String defaultRepositoryName;
 
-  private String defaultRepositoryId;
-  private String defaultRepositoryName;
-
-  private JcrDao dao;
+  protected ArtifactDAO dao;
 
   //*********************************************************************************************/
   //* Constructors */
   //*********************************************************************************************/
 
 
-  public JcrKnowledgeArtifactRepository(javax.jcr.Repository delegate,
+  public KnowledgeArtifactRepositoryCore(ArtifactDAO dao,
       KnowledgeArtifactRepositoryServerConfig cfg) {
-    this(delegate, null, cfg);
-  }
-
-  public JcrKnowledgeArtifactRepository(JcrDao dao, KnowledgeArtifactRepositoryServerConfig cfg) {
     this.cfg = cfg;
     hrefBuilder = new HrefBuilder(cfg);
     this.dao = dao;
@@ -76,11 +63,6 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
         .getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID);
     this.defaultRepositoryName = cfg
         .getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME);
-  }
-
-  public JcrKnowledgeArtifactRepository(javax.jcr.Repository delegate, Runnable cleanup,
-      KnowledgeArtifactRepositoryServerConfig cfg) {
-    this(new JcrDao(delegate, cleanup), cfg);
   }
 
   private Optional<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> createRepositoryDescriptor(
@@ -104,7 +86,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
 
   @Override
   public Answer<List<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository>> listKnowledgeArtifactRepositories() {
-    return createRepositoryDescriptor(defaultRepositoryId,defaultRepositoryName)
+    return createRepositoryDescriptor(defaultRepositoryId, defaultRepositoryName)
         .map(descr -> Answer.of(singletonList(descr)))
         .orElseGet(Answer::notFound);
   }
@@ -146,9 +128,9 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public Answer<List<Pointer>> listKnowledgeArtifacts(String repositoryId, Integer offset,
       Integer limit, Boolean deleted) {
-    try (JcrDao.DaoResult<List<Node>> result = dao
-        .getResources(repositoryId, deleted, new HashMap<>())) {
-      List<Node> nodes = result.getValue();
+    try (DaoResult<List<Artifact>> result = dao
+        .listResources(repositoryId, deleted)) {
+      List<Artifact> nodes = result.getValue();
 
       List<Pointer> pointers = nodes.stream()
           .map(node -> artifactToPointer(node, repositoryId))
@@ -162,7 +144,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   public Answer<UUID> initKnowledgeArtifact(String repositoryId) {
     UUID artifactId = UUID.randomUUID();
 
-    try (JcrDao.DaoResult<Node> ignored = dao
+    try (DaoResult<Artifact> ignored = dao
         .saveResource(repositoryId, artifactId)) {
       return Answer.of(ResponseCodeSeries.Created, artifactId);
     }
@@ -177,17 +159,17 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public Answer<byte[]> getLatestKnowledgeArtifact(String repositoryId, UUID artifactId,
       Boolean deleted) {
-    try (JcrDao.DaoResult<Version> result = dao
-        .getLatestResource(repositoryId, artifactId, deleted)) {
-      Version version = result.getValue();
-      return Answer.of(getDataFromNode(version));
+    try (DaoResult<ArtifactVersion> result = dao
+        .getLatestResourceVersion(repositoryId, artifactId, deleted)) {
+      ArtifactVersion version = result.getValue();
+      return Answer.of(getData(repositoryId, version));
     }
   }
 
   @Override
   public Answer<Void> isKnowledgeArtifactSeries(String repositoryId, UUID artifactId,
       Boolean deleted) {
-    try (JcrDao.DaoResult<List<Version>> ignored = dao
+    try (DaoResult<List<ArtifactVersion>> ignored = dao
         .getResourceVersions(repositoryId, artifactId, deleted)) {
       return Answer.of();
     }
@@ -196,7 +178,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public Answer<Void> enableKnowledgeArtifact(String repositoryId,
       UUID artifactId) {
-    dao.enableResource(repositoryId, artifactId);
+    dao.enableResourceSeries(repositoryId, artifactId);
     return Answer.of(ResponseCodeSeries.Created);
   }
 
@@ -206,7 +188,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     if ((Boolean.TRUE.equals(deleted))) {
       return unsupported();
     }
-    dao.deleteResource(repositoryId, artifactId);
+    dao.deleteResourceSeries(repositoryId, artifactId);
     return Answer.of(ResponseCodeSeries.NoContent);
   }
 
@@ -214,9 +196,9 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   public Answer<List<Pointer>> getKnowledgeArtifactSeries(String repositoryId,
       UUID artifactId, Boolean deleted, Integer offset, Integer limit,
       String beforeTag, String afterTag, String sort) {
-    try (JcrDao.DaoResult<List<Version>> result = dao
+    try (DaoResult<List<ArtifactVersion>> result = dao
         .getResourceVersions(repositoryId, artifactId, deleted)) {
-      List<Version> versions = result.getValue();
+      List<ArtifactVersion> versions = result.getValue();
 
       return versions.isEmpty()
           ? Answer.of(Collections.emptyList())
@@ -229,13 +211,12 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public Answer<Void> addKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       byte[] document) {
-    Map<String, String> params = new HashMap<>();
-
     String versionId = UUID.randomUUID().toString();
-    try (JcrDao.DaoResult<Version> result = dao
-        .saveResource(repositoryId, artifactId, versionId, document, params)) {
+
+    try (DaoResult<ArtifactVersion> result = dao
+        .saveResource(repositoryId, artifactId, versionId, document, emptyMap())) {
       URI location = versionToPointer(result.getValue(), repositoryId).getHref();
-      return Answer.referTo(location,true);
+      return Answer.referTo(location, true);
     }
   }
 
@@ -246,36 +227,34 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   @Override
   public Answer<byte[]> getKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
-    try (JcrDao.DaoResult<Version> result = dao
-        .getResource(repositoryId, artifactId, versionTag, deleted)) {
-      Version version = result.getValue();
+    try (DaoResult<ArtifactVersion> result = dao
+        .getResourceVersion(repositoryId, artifactId, versionTag, deleted)) {
+      ArtifactVersion version = result.getValue();
 
-      return Answer.of(getDataFromNode(version));
+      return Answer.of(getData(repositoryId, version));
     }
   }
 
   @Override
   public Answer<Void> isKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
-    try (JcrDao.DaoResult<Version> ignored = dao
-        .getResource(repositoryId, artifactId, versionTag, deleted)) {
+    try (DaoResult<ArtifactVersion> ignored = dao
+        .getResourceVersion(repositoryId, artifactId, versionTag, deleted)) {
       return Answer.of(ResponseCodeSeries.OK);
     }
   }
 
   public Answer<Void> enableKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
-    dao.enableResource(repositoryId, artifactId, versionTag);
+    dao.enableResourceVersion(repositoryId, artifactId, versionTag);
     return Answer.of(ResponseCodeSeries.NoContent);
   }
 
   @Override
   public Answer<Void> setKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, byte[] document) {
-    Map<String, String> params = new HashMap<>();
-
-    try (JcrDao.DaoResult<Version> ignored = dao
-        .saveResource(repositoryId, artifactId, versionTag, document, params)) {
+    try (DaoResult<ArtifactVersion> ignored = dao
+        .saveResource(repositoryId, artifactId, versionTag, document, emptyMap())) {
 
       return Answer.of(ResponseCodeSeries.NoContent);
     }
@@ -287,7 +266,7 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     if (Boolean.TRUE.equals(deleted)) {
       return unsupported();
     }
-    dao.deleteResource(repositoryId, artifactId, versionTag);
+    dao.deleteResourceVersion(repositoryId, artifactId, versionTag);
 
     return Answer.of(ResponseCodeSeries.NoContent);
   }
@@ -303,12 +282,13 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
   }
 
 
-  private Pointer versionToPointer(Version version, String repositoryId) {
+  private Pointer versionToPointer(ArtifactVersion version, String repositoryId) {
     try {
-      String artifactId = version.getFrozenNode().getProperty("jcr:id").getString();
-      String versionTag = version.getContainingHistory().getVersionLabels(version)[0];
+      ResourceIdentifier resId = version.getResourceIdentifier();
+      String artifactId = resId.getTag();
+      String versionTag = resId.getVersionTag();
 
-      return (Pointer) SemanticIdentifier.newIdAsPointer(
+      return SemanticIdentifier.newIdAsPointer(
           URI.create(cfg.getTyped(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE)),
           artifactId, "",
           versionTag, hrefBuilder.getArtifactHref(artifactId, versionTag, repositoryId));
@@ -317,10 +297,10 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     }
   }
 
-  private Pointer artifactToPointer(Node node, String repositoryId) {
+  protected Pointer artifactToPointer(Artifact node, String repositoryId) {
     try {
-      String artifactId = node.getProperty("jcr:id").getString();
-      Pointer pointer = (Pointer) SemanticIdentifier.newIdAsPointer(artifactId);
+      String artifactId = node.getArtifactTag();
+      Pointer pointer = SemanticIdentifier.newIdAsPointer(artifactId);
       pointer.withHref(hrefBuilder.getSeriesHref(artifactId, repositoryId));
 
       return pointer;
@@ -329,13 +309,9 @@ public class JcrKnowledgeArtifactRepository implements DisposableBean,
     }
   }
 
-  private byte[] getDataFromNode(Version node) {
-    try {
-      return IOUtils
-          .toByteArray(node.getFrozenNode().getProperty(JCR_DATA).getBinary().getStream());
-    } catch (Exception e) {
-      throw new ResourceIdentificationException(e);
-    }
+  protected byte[] getData(String repositoryId, ArtifactVersion version) {
+    ResourceIdentifier vid = version.getResourceIdentifier();
+    return dao.getData(repositoryId, version);
   }
 
   @Override
