@@ -18,52 +18,39 @@ package edu.mayo.kmdp.repository.artifact;
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
 import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
 
-import edu.mayo.kmdp.repository.artifact.IntegrationTestBase.IntegrationTestConfig;
-import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
-import org.apache.jackrabbit.oak.Oak;
-import org.apache.jackrabbit.oak.jcr.Jcr;
+import edu.mayo.kmdp.repository.artifact.IntegrationTestBase.CommonTestConfig;
 import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.Swagger2SpringBoot;
-import org.omg.spec.api4kp._20200801.services.KPServer;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 
 
 
-@ActiveProfiles("test")
 @SpringBootTest(
     webEnvironment = WebEnvironment.RANDOM_PORT,
     classes = Swagger2SpringBoot.class)
-@ContextConfiguration(classes = IntegrationTestConfig.class)
+@ContextConfiguration(classes = {
+    CommonTestConfig.class,
+    JCRIntegrationTestConfig.class,
+    JPAIntegrationTestConfig.class
+})
 public abstract class IntegrationTestBase {
 
   @LocalServerPort
   int port;
 
-  @Configuration
-  @ComponentScan(basePackageClasses = {KnowledgeArtifactRepositoryService.class})
-  @TestPropertySource(value={"classpath:application.test.properties"})
-  public static class IntegrationTestConfig {
+  public static class CommonTestConfig {
 
-    static KnowledgeArtifactRepositoryServerConfig cfg =
+    public static KnowledgeArtifactRepositoryServerConfig testCfg =
         new KnowledgeArtifactRepositoryServerConfig()
-            .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
-            .with(DEFAULT_REPOSITORY_ID, "TestRepo");
+          .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
+          .with(DEFAULT_REPOSITORY_ID, "TestRepo");
 
     @Bean
-    @KPServer
-    @Profile("test")
-    public KnowledgeArtifactRepositoryService inMemoryRepository() {
-      return new JcrKnowledgeArtifactRepository(
-          new Jcr(new Oak()).createRepository(),
-          cfg);
+    public KnowledgeArtifactRepositoryServerConfig cfg() {
+      return testCfg;
     }
   }
 

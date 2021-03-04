@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.mayo.kmdp.repository.artifact;
+package edu.mayo.kmdp.repository.artifact.jpa;
 
-import edu.mayo.kmdp.repository.artifact.jpa.JPAArtifactDAO;
-import edu.mayo.kmdp.repository.artifact.jpa.JPAKnowledgeArtifactRepository;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
 
 public interface JPAKnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryService {
 
-  static KnowledgeArtifactRepositoryService inMemoryArtifactRepository() {
-    return new JPAKnowledgeArtifactRepository(
-        new JPAArtifactDAO(),
-        new KnowledgeArtifactRepositoryServerConfig());
-  }
 
 }
 

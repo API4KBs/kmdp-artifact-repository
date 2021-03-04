@@ -22,6 +22,11 @@
       <artifactId>kmdp-knowledge-artifact-repository-oak</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>edu.mayo.kmdp</groupId>
+      <artifactId>kmdp-knowledge-artifact-repository-jpa</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -32,6 +37,13 @@
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-xml</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+
 
     <dependency>
       <groupId>edu.mayo.kmdp</groupId>

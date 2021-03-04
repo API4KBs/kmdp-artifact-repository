@@ -33,15 +33,22 @@ import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifac
 import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifactSeriesApi;
 import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.client.ApiClientFactory;
 import org.omg.spec.api4kp._20200801.id.Pointer;
+import org.omg.spec.api4kp._20200801.services.KPServer;
 import org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
 
   private ApiClientFactory webClientFactory;
 
+  @Autowired
+  KnowledgeArtifactRepositoryServerConfig cfg;
+
   protected KnowledgeArtifactRepositoryApi repoApi;
   protected KnowledgeArtifactApi artApi;
   protected KnowledgeArtifactSeriesApi seriesApi;
+
+
 
   @BeforeEach
   void init() {
@@ -66,10 +73,10 @@ class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
     assertEquals(1, repos.size());
     KnowledgeArtifactRepository mainRepo = repos.get(0);
     assertEquals(
-        IntegrationTestConfig.cfg.get(DEFAULT_REPOSITORY_ID).orElseGet(Assertions::fail),
+        cfg.get(DEFAULT_REPOSITORY_ID).orElseGet(Assertions::fail),
         mainRepo.getId().getTag());
     assertEquals(
-        IntegrationTestConfig.cfg.get(DEFAULT_REPOSITORY_NAME).orElseGet(Assertions::fail),
+        cfg.get(DEFAULT_REPOSITORY_NAME).orElseGet(Assertions::fail),
         mainRepo.getName());
   }
 

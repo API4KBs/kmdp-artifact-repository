@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.mayo.kmdp.repository.artifact;
+package edu.mayo.kmdp.repository.artifact.jcr;
 
-import edu.mayo.kmdp.repository.artifact.jcr.JcrAdapter;
-import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
-import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.KnowledgeArtifactApiInternal;
-import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.KnowledgeArtifactRepositoryApiInternal;
-import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.KnowledgeArtifactSeriesApiInternal;
 
 public interface OakKnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryService {
 
