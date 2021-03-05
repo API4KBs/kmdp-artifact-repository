@@ -57,7 +57,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   public JPAArtifactDAO(DataSource source, KnowledgeArtifactRepositoryServerConfig cfg) {
     this.dataSource = source;
     this.cfg = cfg;
-    this.versionRepo = SimpleArtifactVersionRepository.simpleRepo(source);
+    this.versionRepo = SimpleArtifactVersionRepository.simpleRepo(source, cfg);
     ensureInit();
   }
 

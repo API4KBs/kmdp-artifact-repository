@@ -2,6 +2,8 @@ package edu.mayo.kmdp.repository.artifact.jpa.stores.simple;
 
 import static edu.mayo.kmdp.repository.artifact.jpa.entities.ArtifactVersionEntity.pattern;
 
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.dao.Artifact;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
 import edu.mayo.kmdp.repository.artifact.jpa.entities.ArtifactVersionEntity;
@@ -40,8 +42,9 @@ public class SimpleArtifactVersionRepository
 
   public EntityManager emRef;
 
-  public static SimpleArtifactVersionRepository simpleRepo(DataSource ds) {
-    EntityManagerFactory emf = emfProvider(ds).getObject();
+  public static SimpleArtifactVersionRepository simpleRepo(
+      DataSource ds, KnowledgeArtifactRepositoryServerConfig config) {
+    EntityManagerFactory emf = emfProvider(ds, config).getObject();
     EntityManager em = emf.createEntityManager();
     return new SimpleArtifactVersionRepository(em);
   }
@@ -73,7 +76,7 @@ public class SimpleArtifactVersionRepository
   }
 
   private Optional<ArtifactVersionEntity> findFirst(Specification<ArtifactVersionEntity> spec) {
-    return getQuery(spec, PageRequest.of(0,1)).getResultStream().findFirst();
+    return getQuery(spec, PageRequest.of(0, 1)).getResultStream().findFirst();
   }
 
 
@@ -252,8 +255,9 @@ public class SimpleArtifactVersionRepository
     return emf.createEntityManager();
   }
 
-  private static EntityManagerFactory entityManagerFactory(DataSource ds) {
-    EntityManagerFactory emf = emfProvider(ds).getObject();
+  private static EntityManagerFactory entityManagerFactory(
+      DataSource ds, KnowledgeArtifactRepositoryServerConfig config) {
+    EntityManagerFactory emf = emfProvider(ds, config).getObject();
     if (emf == null) {
       throw new UnsupportedOperationException("Unable to instantiate Artifact Persistence Layer");
     }
@@ -261,7 +265,8 @@ public class SimpleArtifactVersionRepository
   }
 
   private static LocalContainerEntityManagerFactoryBean emfProvider(
-      DataSource dataSource) {
+      DataSource dataSource,
+      KnowledgeArtifactRepositoryServerConfig config) {
     LocalContainerEntityManagerFactoryBean emfb
         = new LocalContainerEntityManagerFactoryBean();
     emfb.setDataSource(dataSource);
@@ -271,7 +276,7 @@ public class SimpleArtifactVersionRepository
 
     JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
     emfb.setJpaVendorAdapter(vendorAdapter);
-    emfb.setJpaProperties(additionalProperties());
+    emfb.setJpaProperties(additionalProperties(config));
 
     emfb.afterPropertiesSet();
 
@@ -290,9 +295,17 @@ public class SimpleArtifactVersionRepository
     return new PersistenceExceptionTranslationPostProcessor();
   }
 
-  private static Properties additionalProperties() {
+  private static Properties additionalProperties(
+      KnowledgeArtifactRepositoryServerConfig config) {
     Properties properties = new Properties();
-    properties.setProperty("hibernate.hbm2ddl.auto", "create");
+
+    config.get(KnowledgeArtifactRepositoryOptions.DDL_MODE)
+        .ifPresent(mode ->
+            properties.setProperty("hibernate.hbm2ddl.auto", mode));
+
+    config.get(KnowledgeArtifactRepositoryOptions.SQL_DIALECT)
+        .ifPresent(mode ->
+            properties.setProperty("hibernate.dialect", mode));
 
     return properties;
   }

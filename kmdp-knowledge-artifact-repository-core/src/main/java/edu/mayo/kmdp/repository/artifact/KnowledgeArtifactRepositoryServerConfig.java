@@ -68,6 +68,18 @@ public class KnowledgeArtifactRepositoryServerConfig extends
             "Root directory for filesystem-based repositories",
             File.class,
             false)),
+    DDL_MODE(
+        Opt.of("http://edu.mayo.kmdp/artifactRepository/database/ddl",
+            "create-drop",
+            "DDL modality",
+            String.class,
+            false)),
+    SQL_DIALECT(
+        Opt.of("http://edu.mayo.kmdp/artifactRepository/database/sql_dialect",
+            null,
+            "SQL Hibernate Dialect",
+            String.class,
+            false)),
 
     BASE_NAMESPACE(
         Opt.of("http://edu.mayo.kmdp/artifactRepository/baseNamespace",
