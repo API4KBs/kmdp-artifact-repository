@@ -22,6 +22,7 @@ import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.Knowledge
 public interface KnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryApiInternal,
     KnowledgeArtifactSeriesApiInternal, KnowledgeArtifactApiInternal {
 
+  void shutdown();
 
 }
 

@@ -33,28 +33,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(SpringExtension.class)
-@DataJpaTest
-@ContextConfiguration(classes = TestJPAConfiguration.class)
-@AutoConfigurationPackage
-class JPADaoTest {
+class JPADaoNoSpringTest {
 
-  @Autowired
   private JPAArtifactDAO dao;
 
-  @Autowired
-  KnowledgeArtifactRepositoryServerConfig cfg;
+  KnowledgeArtifactRepositoryServerConfig cfg = new KnowledgeArtifactRepositoryServerConfig();
 
   private UUID artifactUUID;
   private UUID artifactUUID2;
@@ -65,11 +52,12 @@ class JPADaoTest {
     artifactUUID = UUID.randomUUID();
     artifactUUID2 = UUID.randomUUID();
     repoId = cfg.getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID);
+    dao = new JPAArtifactDAO(JPAKnowledgeArtifactRepositoryService.inMemoryDataSource(),cfg);
   }
 
   @AfterEach
   void cleanup() {
-//    dao.clear();
+    dao.clear();
     dao.shutdown();
   }
 
@@ -82,7 +70,7 @@ class JPADaoTest {
   @Test
   void testHasArtifact() {
     UUID random = UUID.randomUUID();
-    dao.saveResource(repoId,random);
+    Artifact entity = dao.saveResource(repoId,random).getValue();
     assertTrue(dao.hasResourceSeries(repoId, random,true));
   }
 
@@ -155,13 +143,10 @@ class JPADaoTest {
   }
 
   @Test
-  void testLoadAndGetLatestVersion() throws InterruptedException {
+  void testLoadAndGetLatestVersion() {
     dao.saveResource(repoId, artifactUUID, "new1", "hi1".getBytes());
-    TimeUnit.MILLISECONDS.sleep(1);
     dao.saveResource(repoId, artifactUUID, "new2", "hi2".getBytes());
-    TimeUnit.MILLISECONDS.sleep(1);
     dao.saveResource(repoId, artifactUUID, "new3", "hi3".getBytes());
-    TimeUnit.MILLISECONDS.sleep(1);
     dao.saveResource(repoId, artifactUUID, "new4", "hi4".getBytes());
 
     ArtifactVersion version = dao.getLatestResourceVersion(repoId, artifactUUID, false).getValue();

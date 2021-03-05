@@ -310,7 +310,6 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   }
 
   protected byte[] getData(String repositoryId, ArtifactVersion version) {
-    ResourceIdentifier vid = version.getResourceIdentifier();
     return dao.getData(repositoryId, version);
   }
 

@@ -1,13 +1,16 @@
 package edu.mayo.kmdp.repository.artifact.jpa.entities;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Embeddable;
+import org.hibernate.annotations.Type;
 
 @Embeddable
 public class KeyId implements Serializable {
 
   private String repositoryId;
+  @Type(type = "uuid-char")
   private UUID artifactId;
   private String versionTag;
 
@@ -46,23 +49,23 @@ public class KeyId implements Serializable {
   }
 
 
-  public boolean equals(Object other) {
-    if (other == null) {
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (other instanceof KeyId) {
-      KeyId otherkey = (KeyId) other;
-      return this.getRepositoryId().equals(otherkey.getRepositoryId())
-          && this.getArtifactId().equals(otherkey.getArtifactId())
-          && this.getVersionTag().equals(otherkey.getVersionTag());
-    }
-    return false;
+    KeyId keyId = (KeyId) o;
+    return Objects.equals(repositoryId, keyId.repositoryId) && Objects
+        .equals(artifactId, keyId.artifactId) && Objects
+        .equals(versionTag, keyId.versionTag);
   }
 
+  @Override
   public int hashCode() {
-    int result = 31 + getArtifactId().hashCode();
-    result = 31 * result + getRepositoryId().hashCode();
-    return 31 * result + getVersionTag().hashCode();
+    return Objects.hash(repositoryId, artifactId, versionTag);
   }
 
   @Override

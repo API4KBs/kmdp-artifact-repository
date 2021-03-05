@@ -21,7 +21,7 @@ import javax.persistence.Version;
 import javax.sql.rowset.serial.SerialBlob;
 import org.omg.spec.api4kp._20200801.id.ResourceIdentifier;
 
-@Entity(name = "Artifacts")
+@Entity(name = "KnowledgeArtifacts")
 public class ArtifactVersionEntity implements Artifact, ArtifactVersion,
     DaoResult<ArtifactVersionEntity> {
 
@@ -35,9 +35,9 @@ public class ArtifactVersionEntity implements Artifact, ArtifactVersion,
   @Temporal(javax.persistence.TemporalType.TIMESTAMP)
   private Date created;
 
-  private boolean softDeleted;
+  private Boolean softDeleted;
 
-  private boolean series;
+  private Boolean series;
 
   @Lob
   private Blob binaryData;
@@ -61,15 +61,43 @@ public class ArtifactVersionEntity implements Artifact, ArtifactVersion,
     this.created = new Date();
   }
 
-  public boolean isSeries() {
+  public static ArtifactVersionEntity pattern() {
+    return new ArtifactVersionEntity();
+  }
+
+  public ArtifactVersionEntity withRepositoryId(String repositoryId) {
+    if (key == null) {
+      key = new KeyId();
+    }
+    key.setRepositoryId(repositoryId);
+    return this;
+  }
+
+  public ArtifactVersionEntity withArtifactId(UUID artifactId) {
+    if (key == null) {
+      key = new KeyId();
+    }
+    key.setArtifactId(artifactId);
+    return this;
+  }
+
+  public ArtifactVersionEntity withVersionTag(String versionTag) {
+    if (key == null) {
+      key = new KeyId();
+    }
+    key.setVersionTag(versionTag);
+    return this;
+  }
+
+  public Boolean isSeries() {
     return series;
   }
 
-  public void setSeries(boolean series) {
+  public void setSeries(Boolean series) {
     this.series = series;
   }
 
-  public ArtifactVersionEntity withSeries(boolean series) {
+  public ArtifactVersionEntity withSeries(Boolean series) {
     setSeries(series);
     return this;
   }
@@ -112,23 +140,25 @@ public class ArtifactVersionEntity implements Artifact, ArtifactVersion,
     }
   }
 
-  public boolean isSoftDeleted() {
+  public Boolean isSoftDeleted() {
     return softDeleted;
   }
 
-  public void setSoftDeleted(boolean deleted) {
+  public void setSoftDeleted(Boolean deleted) {
     this.softDeleted = deleted;
   }
 
-  public ArtifactVersionEntity withSoftDeleted(boolean deleted) {
+  public ArtifactVersionEntity withSoftDeleted(Boolean deleted) {
     this.softDeleted = deleted;
     return this;
   }
 
+  @Transient
   public boolean isUnavailable() {
     return softDeleted;
   }
 
+  @Transient
   public boolean isAvailable() {
     return !softDeleted;
   }

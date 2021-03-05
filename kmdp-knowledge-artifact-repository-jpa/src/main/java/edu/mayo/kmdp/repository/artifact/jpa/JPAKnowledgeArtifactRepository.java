@@ -19,18 +19,31 @@ package edu.mayo.kmdp.repository.artifact.jpa;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryCore;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactDAO;
+import edu.mayo.kmdp.repository.artifact.jpa.stores.ArtifactVersionRepository;
+import javax.sql.DataSource;
 import org.omg.spec.api4kp._20200801.services.KPServer;
 
 @KPServer
-public class JPAKnowledgeArtifactRepository extends KnowledgeArtifactRepositoryCore {
+public class JPAKnowledgeArtifactRepository extends KnowledgeArtifactRepositoryCore
+  implements JPAKnowledgeArtifactRepositoryService {
 
   public JPAKnowledgeArtifactRepository(ArtifactDAO dao,
       KnowledgeArtifactRepositoryServerConfig cfg) {
     super(dao, cfg);
   }
 
-  //*********************************************************************************************/
-  //* Constructors */
-  //*********************************************************************************************/
+  /**
+   * Test Constructor
+   * @param dao
+   * @param cfg
+   */
+  public JPAKnowledgeArtifactRepository(DataSource dao,
+      KnowledgeArtifactRepositoryServerConfig cfg) {
+    super(new JPAArtifactDAO(dao,cfg), cfg);
+  }
+
+  ArtifactVersionRepository getPersistenceLayer() {
+    return ((JPAArtifactDAO) dao).getPersistenceAdapter();
+  }
 
 }

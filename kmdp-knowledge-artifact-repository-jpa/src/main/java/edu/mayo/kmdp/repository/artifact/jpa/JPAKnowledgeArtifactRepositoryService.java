@@ -15,9 +15,35 @@
  */
 package edu.mayo.kmdp.repository.artifact.jpa;
 
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
+import java.util.UUID;
+import javax.sql.DataSource;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 
 public interface JPAKnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryService {
+
+  static DataSource inMemoryDataSource() {
+    String dbName = UUID.randomUUID().toString();
+
+    DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
+    dataSourceBuilder.driverClassName("org.h2.Driver");
+    dataSourceBuilder.url("jdbc:h2:mem:" + dbName);
+    dataSourceBuilder.username("SA");
+    dataSourceBuilder.password("");
+
+    return dataSourceBuilder.build();
+  }
+
+  static KnowledgeArtifactRepositoryService inMemoryArtifactRepository() {
+    return inMemoryArtifactRepository(new KnowledgeArtifactRepositoryServerConfig());
+  }
+
+  static KnowledgeArtifactRepositoryService inMemoryArtifactRepository(
+      KnowledgeArtifactRepositoryServerConfig cfg) {
+    return new JPAKnowledgeArtifactRepository(
+        inMemoryDataSource(), cfg);
+  }
 
 
 }

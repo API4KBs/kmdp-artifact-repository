@@ -14,8 +14,11 @@ import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
 import edu.mayo.kmdp.repository.artifact.jpa.entities.ArtifactVersionEntity;
 import edu.mayo.kmdp.repository.artifact.jpa.entities.KeyId;
 import edu.mayo.kmdp.repository.artifact.jpa.stores.ArtifactVersionRepository;
+import edu.mayo.kmdp.repository.artifact.jpa.stores.simple.SimpleArtifactVersionRepository;
 import edu.mayo.kmdp.util.FileUtil;
 import edu.mayo.kmdp.util.StreamUtil;
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
@@ -46,13 +49,15 @@ public class JPAArtifactDAO implements ArtifactDAO {
     //
   }
 
-  public JPAArtifactDAO(String defaultRepositoryId) {
-    this.defaultRepositoryId = defaultRepositoryId;
-    ensureInit();
-  }
-
-  public JPAArtifactDAO(KnowledgeArtifactRepositoryServerConfig cfg) {
+  /**
+   * Test constructor
+   * @param source
+   * @param cfg
+   */
+  public JPAArtifactDAO(DataSource source, KnowledgeArtifactRepositoryServerConfig cfg) {
+    this.dataSource = source;
     this.cfg = cfg;
+    this.versionRepo = SimpleArtifactVersionRepository.simpleRepo(source);
     ensureInit();
   }
 
@@ -70,7 +75,10 @@ public class JPAArtifactDAO implements ArtifactDAO {
   public void shutdown() {
     try {
       dataSource.getConnection().close();
-    } catch (SQLException sqle) {
+      if (versionRepo instanceof Closeable) {
+        ((Closeable) versionRepo).close();
+      }
+    } catch (SQLException | IOException sqle) {
       sqle.printStackTrace();
     }
   }
@@ -78,6 +86,10 @@ public class JPAArtifactDAO implements ArtifactDAO {
   @Override
   public void clear() {
     versionRepo.deleteAll();
+  }
+
+  ArtifactVersionRepository getPersistenceAdapter() {
+    return versionRepo;
   }
 
   /***********************************************************************************/

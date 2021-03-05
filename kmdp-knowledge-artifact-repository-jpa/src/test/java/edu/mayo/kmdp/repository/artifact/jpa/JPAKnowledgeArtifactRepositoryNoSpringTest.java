@@ -14,6 +14,7 @@
 package edu.mayo.kmdp.repository.artifact.jpa;
 
 import static edu.mayo.kmdp.registry.Registry.BASE_UUID_URN;
+import static edu.mayo.kmdp.repository.artifact.jpa.JPAKnowledgeArtifactRepositoryService.inMemoryDataSource;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.Created;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NoContent;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotImplemented;
@@ -39,27 +40,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.spec.api4kp._20200801.Answer;
 import org.omg.spec.api4kp._20200801.id.Pointer;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.http.HttpHeaders;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(SpringExtension.class)
-@DataJpaTest
-@AutoConfigurationPackage
-@ContextConfiguration(classes = TestJPAConfiguration.class)
-class JPAKnowledgeArtifactRepositoryTest {
 
-  @Autowired
+class JPAKnowledgeArtifactRepositoryNoSpringTest {
+
+
+  KnowledgeArtifactRepositoryServerConfig cfg = new KnowledgeArtifactRepositoryServerConfig();
+
   JPAArtifactDAO dao;
-
-  @Autowired
-  KnowledgeArtifactRepositoryServerConfig cfg;
 
   private JPAKnowledgeArtifactRepository repository;
   private String repoId;
@@ -69,6 +60,7 @@ class JPAKnowledgeArtifactRepositoryTest {
 
   @BeforeEach
   void repo() {
+    dao = new JPAArtifactDAO(inMemoryDataSource(), cfg);
     repository = new JPAKnowledgeArtifactRepository(dao, cfg);
     repoId = cfg.getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID);
     artifactID = UUID.randomUUID();
@@ -77,6 +69,7 @@ class JPAKnowledgeArtifactRepositoryTest {
 
   @AfterEach
   void cleanup() {
+    repository.clear();
     repository.shutdown();
   }
 
