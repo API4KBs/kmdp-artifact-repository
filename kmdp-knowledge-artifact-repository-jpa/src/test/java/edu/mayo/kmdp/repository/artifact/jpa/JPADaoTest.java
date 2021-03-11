@@ -157,11 +157,11 @@ class JPADaoTest {
   @Test
   void testLoadAndGetLatestVersion() throws InterruptedException {
     dao.saveResource(repoId, artifactUUID, "new1", "hi1".getBytes());
-    TimeUnit.MILLISECONDS.sleep(1);
+    TimeUnit.MILLISECONDS.sleep(5);
     dao.saveResource(repoId, artifactUUID, "new2", "hi2".getBytes());
-    TimeUnit.MILLISECONDS.sleep(1);
+    TimeUnit.MILLISECONDS.sleep(5);
     dao.saveResource(repoId, artifactUUID, "new3", "hi3".getBytes());
-    TimeUnit.MILLISECONDS.sleep(1);
+    TimeUnit.MILLISECONDS.sleep(5);
     dao.saveResource(repoId, artifactUUID, "new4", "hi4".getBytes());
 
     ArtifactVersion version = dao.getLatestResourceVersion(repoId, artifactUUID, false).getValue();

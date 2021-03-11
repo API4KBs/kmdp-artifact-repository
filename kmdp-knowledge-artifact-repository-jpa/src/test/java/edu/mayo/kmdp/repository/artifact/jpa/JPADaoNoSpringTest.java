@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -143,10 +144,13 @@ class JPADaoNoSpringTest {
   }
 
   @Test
-  void testLoadAndGetLatestVersion() {
+  void testLoadAndGetLatestVersion() throws InterruptedException {
     dao.saveResource(repoId, artifactUUID, "new1", "hi1".getBytes());
+    TimeUnit.MILLISECONDS.sleep(5);
     dao.saveResource(repoId, artifactUUID, "new2", "hi2".getBytes());
+    TimeUnit.MILLISECONDS.sleep(5);
     dao.saveResource(repoId, artifactUUID, "new3", "hi3".getBytes());
+    TimeUnit.MILLISECONDS.sleep(5);
     dao.saveResource(repoId, artifactUUID, "new4", "hi4".getBytes());
 
     ArtifactVersion version = dao.getLatestResourceVersion(repoId, artifactUUID, false).getValue();
