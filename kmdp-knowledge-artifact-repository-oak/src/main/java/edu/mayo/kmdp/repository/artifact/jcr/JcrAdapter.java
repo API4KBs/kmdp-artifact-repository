@@ -13,6 +13,7 @@ import edu.mayo.kmdp.repository.artifact.dao.DaoResult;
 import edu.mayo.kmdp.repository.artifact.exceptions.DaoRuntimeException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceIdentificationException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -63,8 +64,21 @@ public class JcrAdapter implements ArtifactDAO {
   }
 
   @Override
+  public DaoResult<Boolean> hasResourceSeries(String repositoryId, UUID artifactId) {
+    return innerDao.getResources(repositoryId, true, Collections.emptyMap())
+        .map(nodes -> mapAll(nodes,this::toArtifact)
+            .stream().anyMatch(x -> x.getArtifactId().equals(artifactId)));
+  }
+
+  @Override
   public DaoResult<Artifact> getResourceSeries(String repositoryId, UUID artifactId) {
     throw new UnsupportedOperationException("Unused");
+  }
+
+  @Override
+  public DaoResult<Boolean> hasResourceVersions(String repositoryId, UUID artifactId, Boolean deleted) {
+    return innerDao.getResourceVersions(repositoryId, artifactId, deleted)
+        .map(l -> ! l.isEmpty());
   }
 
   @Override

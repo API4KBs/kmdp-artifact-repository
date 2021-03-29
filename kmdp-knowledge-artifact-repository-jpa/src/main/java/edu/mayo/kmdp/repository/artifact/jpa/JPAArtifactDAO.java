@@ -122,6 +122,13 @@ public class JPAArtifactDAO implements ArtifactDAO {
 
 
   @Override
+  public DaoResult<Boolean> hasResourceSeries(String repositoryId, UUID artifactId) {
+    return ofJPA(
+        versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndSeries(
+            repositoryId, artifactId,true));
+  }
+
+  @Override
   public DaoResult<Artifact> getResourceSeries(String repositoryId, UUID artifactId) {
     return ofJPA(
         fetchArtifactSeries(repositoryId, artifactId));
@@ -132,6 +139,14 @@ public class JPAArtifactDAO implements ArtifactDAO {
       Boolean includeSoftDeleted) {
     return ofJPA(
         fetchAllArtifactVersions(repositoryId, artifactId, includeSoftDeleted));
+  }
+
+  @Override
+  public DaoResult<Boolean> hasResourceVersions(String repositoryId, UUID artifactId,
+      Boolean includeSoftDeleted) {
+    return ofJPA(
+        versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndSeriesAndSoftDeleted(
+            repositoryId, artifactId, false, includeSoftDeleted));
   }
 
   @Override
@@ -148,6 +163,14 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  public void removeResourceVersion(String repositoryId, UUID artifactId, String versionTag) {
+    if (versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndKey_VersionTagAndSoftDeleted(
+        repositoryId, artifactId, versionTag, true)) {
+      versionRepo.deleteById(new KeyId(repositoryId, artifactId, versionTag));
+    }
+  }
+
+  @Override
   public void deleteResourceSeries(String repositoryId, UUID artifactId) {
     List<ArtifactVersionEntity> versions =
         fetchAllArtifactVersions(repositoryId, artifactId, true).stream()
@@ -158,6 +181,14 @@ public class JPAArtifactDAO implements ArtifactDAO {
     versionRepo.save(fetchArtifactSeries(repositoryId, artifactId).withSoftDeleted(true));
     // ...soft-deletes all versions
     versions.forEach(version -> versionRepo.save(version.withSoftDeleted(true)));
+  }
+
+  @Override
+  public void removeResourceSeries(String repositoryId, UUID artifactId) {
+    if (versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndSeries(
+        repositoryId, artifactId, true)) {
+      versionRepo.deleteById(new KeyId(repositoryId, artifactId, artifactId.toString()));
+    }
   }
 
   @Override

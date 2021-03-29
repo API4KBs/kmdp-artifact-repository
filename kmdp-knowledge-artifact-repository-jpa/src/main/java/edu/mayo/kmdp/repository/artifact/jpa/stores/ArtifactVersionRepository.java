@@ -55,4 +55,7 @@ public interface ArtifactVersionRepository extends CrudRepository<ArtifactVersio
 
   boolean existsByKey_RepositoryIdAndKey_ArtifactIdAndSoftDeleted(
       String repositoryId, UUID artifactId, boolean softDeleted);
+
+  boolean existsByKey_RepositoryIdAndKey_ArtifactIdAndKey_VersionTagAndSoftDeleted(
+      String repositoryId, UUID artifactId, String versionTag, boolean softDeleted);
 }

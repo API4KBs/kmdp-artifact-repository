@@ -19,15 +19,54 @@ public interface ArtifactDAO {
 
   DaoResult<Artifact> getResourceSeries(String repositoryId, UUID artifactId);
 
+  /**
+   * Returns true if the Artifact Series exist
+   * (regardless of versions and their deletion status)
+   * @param repositoryId
+   * @param artifactId
+   * @return
+   */
+  DaoResult<Boolean> hasResourceSeries(String repositoryId, UUID artifactId);
+
+  /**
+   * Returns true if there is at least one version that is available
+   * or (if deleted=true) soft-deleted
+   * @param repositoryId
+   * @param artifactId
+   * @param deleted
+   * @return
+   */
+  DaoResult<Boolean> hasResourceVersions(String repositoryId, UUID artifactId, Boolean deleted);
+
   DaoResult<List<ArtifactVersion>> getResourceVersions(String repositoryId, UUID artifactId, Boolean deleted);
 
   DaoResult<ArtifactVersion> getLatestResourceVersion(String repositoryId, UUID artifactId, Boolean deleted);
 
   void clear();
 
+  /**
+   * Soft-delete
+   * @param repositoryId
+   * @param artifactId
+   * @param versionTag
+   */
   void deleteResourceVersion(String repositoryId, UUID artifactId, String versionTag);
 
+  /**
+   * Hard-delete
+   * @param repositoryId
+   * @param artifactId
+   * @param versionTag
+   */
+  default void removeResourceVersion(String repositoryId, UUID artifactId, String versionTag) {
+    deleteResourceVersion(repositoryId, artifactId, versionTag);
+  }
+
   void deleteResourceSeries(String repositoryId, UUID artifactId);
+
+  default void removeResourceSeries(String repositoryId, UUID artifactId) {
+    deleteResourceSeries(repositoryId, artifactId);
+  }
 
   void enableResourceVersion(String repositoryId, UUID artifactId, String versionTag);
 

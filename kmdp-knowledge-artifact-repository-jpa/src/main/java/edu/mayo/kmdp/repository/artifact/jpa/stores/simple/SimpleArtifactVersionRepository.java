@@ -248,6 +248,28 @@ public class SimpleArtifactVersionRepository
         ));
   }
 
+  @Override
+  public boolean existsByKey_RepositoryIdAndKey_ArtifactIdAndKey_VersionTagAndSoftDeleted(
+      String repositoryId, UUID artifactId, String versionTag, boolean softDeleted) {
+    return exists(
+        Example.of(
+            pattern()
+                .withRepositoryId(repositoryId)
+                .withArtifactId(artifactId)
+                .withVersionTag(versionTag)
+                .withSoftDeleted(softDeleted)
+        ));
+  }
+
+  @Override
+  public void deleteById(KeyId keyId) {
+    if (this.existsById(keyId)) {
+      EntityTransaction tx = emRef.getTransaction();
+      tx.begin();
+      super.deleteById(keyId);
+      tx.commit();
+    }
+  }
 
   /*******************/
 

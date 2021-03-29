@@ -13,6 +13,7 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NoContent;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.omg.spec.api4kp._20200801.Answer.unsupported;
@@ -169,9 +170,16 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   @Override
   public Answer<Void> isKnowledgeArtifactSeries(String repositoryId, UUID artifactId,
       Boolean deleted) {
-    try (DaoResult<List<ArtifactVersion>> ignored = dao
-        .getResourceVersions(repositoryId, artifactId, deleted)) {
-      return Answer.of();
+    boolean seriesExist = dao.hasResourceSeries(repositoryId, artifactId).getValue();
+    if (seriesExist) {
+      boolean contentExist = dao.hasResourceVersions(repositoryId, artifactId, deleted).getValue();
+      if (contentExist) {
+        return Answer.succeed();
+      } else {
+        return Answer.of(NoContent);
+      }
+    } else {
+      return Answer.notFound();
     }
   }
 
@@ -186,10 +194,11 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   public Answer<Void> deleteKnowledgeArtifact(String repositoryId, UUID artifactId,
       Boolean deleted) {
     if ((Boolean.TRUE.equals(deleted))) {
-      return unsupported();
+      dao.removeResourceSeries(repositoryId, artifactId);
+    } else {
+      dao.deleteResourceSeries(repositoryId, artifactId);
     }
-    dao.deleteResourceSeries(repositoryId, artifactId);
-    return Answer.of(ResponseCodeSeries.NoContent);
+    return Answer.of(NoContent);
   }
 
   @Override
@@ -247,7 +256,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   public Answer<Void> enableKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
     dao.enableResourceVersion(repositoryId, artifactId, versionTag);
-    return Answer.of(ResponseCodeSeries.NoContent);
+    return Answer.of(NoContent);
   }
 
   @Override
@@ -256,7 +265,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     try (DaoResult<ArtifactVersion> ignored = dao
         .saveResource(repositoryId, artifactId, versionTag, document, emptyMap())) {
 
-      return Answer.of(ResponseCodeSeries.NoContent);
+      return Answer.of(NoContent);
     }
   }
 
@@ -264,11 +273,11 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   public Answer<Void> deleteKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
     if (Boolean.TRUE.equals(deleted)) {
-      return unsupported();
+      dao.removeResourceVersion(repositoryId, artifactId, versionTag);
+    } else {
+      dao.deleteResourceVersion(repositoryId, artifactId, versionTag);
     }
-    dao.deleteResourceVersion(repositoryId, artifactId, versionTag);
-
-    return Answer.of(ResponseCodeSeries.NoContent);
+    return Answer.of(NoContent);
   }
 
 
