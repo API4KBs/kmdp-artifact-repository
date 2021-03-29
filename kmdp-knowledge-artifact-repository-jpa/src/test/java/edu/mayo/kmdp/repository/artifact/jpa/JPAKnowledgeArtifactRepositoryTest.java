@@ -433,7 +433,7 @@ class JPAKnowledgeArtifactRepositoryTest {
     dao.deleteResourceVersion(repoId, artifactID, "new");
     Answer<Void> responseEntity = repository
         .isKnowledgeArtifactSeries(repoId, artifactID);
-    assertEquals(OK, responseEntity.getOutcomeType());
+    assertEquals(NoContent, responseEntity.getOutcomeType());
   }
 
   @Test
