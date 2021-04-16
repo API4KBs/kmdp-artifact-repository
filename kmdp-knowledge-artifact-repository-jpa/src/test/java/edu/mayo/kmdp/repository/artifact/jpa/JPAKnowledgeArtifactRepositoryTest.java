@@ -22,8 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
@@ -59,7 +59,7 @@ class JPAKnowledgeArtifactRepositoryTest {
   JPAArtifactDAO dao;
 
   @Autowired
-  KnowledgeArtifactRepositoryServerConfig cfg;
+  KnowledgeArtifactRepositoryServerProperties cfg;
 
   private JPAKnowledgeArtifactRepository repository;
   private String repoId;
@@ -201,7 +201,7 @@ class JPAKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/" + repoId + "/artifacts/" + artifactID,
+    assertEquals("http://repos/" + repoId + "/artifacts/" + artifactID,
         result.get(0).getHref().toString());
   }
 
@@ -234,8 +234,8 @@ class JPAKnowledgeArtifactRepositoryTest {
     Set<String> resultSet = result.stream().map(it -> it.getHref().toString())
         .collect(Collectors.toSet());
 
-    assertTrue(resultSet.contains("http://localhost:8080/repos/" + repoId + "/artifacts/" + artifactID));
-    assertTrue(resultSet.contains("http://localhost:8080/repos/" + repoId + "/artifacts/" + artifactID2));
+    assertTrue(resultSet.contains("http://repos/" + repoId + "/artifacts/" + artifactID));
+    assertTrue(resultSet.contains("http://repos/" + repoId + "/artifacts/" + artifactID2));
   }
 
   @Test
@@ -249,7 +249,7 @@ class JPAKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/" + localRepoId + "/artifacts/" + artifactID,
+    assertEquals("http://repos/" + localRepoId + "/artifacts/" + artifactID,
         result.get(0).getHref().toString());
   }
 
@@ -743,7 +743,7 @@ class JPAKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/" + repoId + "/artifacts/" + artifactID + "/versions/new",
+    assertEquals("http://repos/" + repoId + "/artifacts/" + artifactID + "/versions/new",
         result.get(0).getHref().toString());
   }
 

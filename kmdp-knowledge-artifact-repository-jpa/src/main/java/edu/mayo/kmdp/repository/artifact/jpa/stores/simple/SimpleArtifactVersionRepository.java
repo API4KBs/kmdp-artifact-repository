@@ -2,8 +2,7 @@ package edu.mayo.kmdp.repository.artifact.jpa.stores.simple;
 
 import static edu.mayo.kmdp.repository.artifact.jpa.entities.ArtifactVersionEntity.pattern;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
 import edu.mayo.kmdp.repository.artifact.dao.Artifact;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
 import edu.mayo.kmdp.repository.artifact.jpa.entities.ArtifactVersionEntity;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
@@ -43,7 +43,7 @@ public class SimpleArtifactVersionRepository
   public EntityManager emRef;
 
   public static SimpleArtifactVersionRepository simpleRepo(
-      DataSource ds, KnowledgeArtifactRepositoryServerConfig config) {
+      DataSource ds, KnowledgeArtifactRepositoryServerProperties config) {
     EntityManagerFactory emf = emfProvider(ds, config).getObject();
     EntityManager em = emf.createEntityManager();
     return new SimpleArtifactVersionRepository(em);
@@ -273,22 +273,9 @@ public class SimpleArtifactVersionRepository
 
   /*******************/
 
-  private static EntityManager entityManager(EntityManagerFactory emf) {
-    return emf.createEntityManager();
-  }
-
-  private static EntityManagerFactory entityManagerFactory(
-      DataSource ds, KnowledgeArtifactRepositoryServerConfig config) {
-    EntityManagerFactory emf = emfProvider(ds, config).getObject();
-    if (emf == null) {
-      throw new UnsupportedOperationException("Unable to instantiate Artifact Persistence Layer");
-    }
-    return emf;
-  }
-
   private static LocalContainerEntityManagerFactoryBean emfProvider(
       DataSource dataSource,
-      KnowledgeArtifactRepositoryServerConfig config) {
+      KnowledgeArtifactRepositoryServerProperties cfg) {
     LocalContainerEntityManagerFactoryBean emfb
         = new LocalContainerEntityManagerFactoryBean();
     emfb.setDataSource(dataSource);
@@ -298,7 +285,11 @@ public class SimpleArtifactVersionRepository
 
     JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
     emfb.setJpaVendorAdapter(vendorAdapter);
-    emfb.setJpaProperties(additionalProperties(config));
+    Properties additionalProps = new Properties();
+    if (cfg != null) {
+      additionalProps.putAll(additionalProperties(cfg));
+    }
+    emfb.setJpaProperties(additionalProps);
 
     emfb.afterPropertiesSet();
 
@@ -317,18 +308,20 @@ public class SimpleArtifactVersionRepository
     return new PersistenceExceptionTranslationPostProcessor();
   }
 
-  private static Properties additionalProperties(
-      KnowledgeArtifactRepositoryServerConfig config) {
+  private static Properties additionalProperties(KnowledgeArtifactRepositoryServerProperties cfg) {
+    return additionalProperties(cfg, Properties::getProperty);
+  }
+
+  private static <T> Properties additionalProperties(T cfg, BiFunction<T, String, String> setter) {
     Properties properties = new Properties();
-
-    config.get(KnowledgeArtifactRepositoryOptions.DDL_MODE)
-        .ifPresent(mode ->
-            properties.setProperty("hibernate.hbm2ddl.auto", mode));
-
-    config.get(KnowledgeArtifactRepositoryOptions.SQL_DIALECT)
-        .ifPresent(mode ->
-            properties.setProperty("hibernate.dialect", mode));
-
+    Optional.ofNullable(setter.apply(cfg, "spring.jpa.hibernate.ddl-auto"))
+        .ifPresent(v -> properties.setProperty("hibernate.hbm2ddl.auto", v));
+    Optional.ofNullable(setter.apply(cfg, "spring.jpa.properties.hibernate.dialect"))
+        .ifPresent(v -> properties.setProperty("hibernate.dialect", v));
+    Optional.ofNullable(setter.apply(cfg, "spring.jpa.show-sql"))
+        .ifPresent(v -> properties.setProperty("hibernate.show_sql", v));
+    Optional.ofNullable(setter.apply(cfg, "spring.jpa.properties.hibernate.format_sql"))
+        .ifPresent(v -> properties.setProperty("hibernate.format_sql", v));
     return properties;
   }
 

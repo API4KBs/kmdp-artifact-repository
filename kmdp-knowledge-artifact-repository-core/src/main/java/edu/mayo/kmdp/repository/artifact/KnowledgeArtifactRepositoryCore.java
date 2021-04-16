@@ -18,7 +18,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.omg.spec.api4kp._20200801.Answer.unsupported;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.dao.Artifact;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactDAO;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
@@ -42,7 +42,7 @@ import org.springframework.beans.factory.DisposableBean;
 public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     ClearableKnowledgeArtifactRepositoryService {
 
-  protected KnowledgeArtifactRepositoryServerConfig cfg;
+  protected KnowledgeArtifactRepositoryServerProperties cfg;
   protected HrefBuilder hrefBuilder;
 
   protected String defaultRepositoryId;
@@ -56,7 +56,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
 
 
   public KnowledgeArtifactRepositoryCore(ArtifactDAO dao,
-      KnowledgeArtifactRepositoryServerConfig cfg) {
+      KnowledgeArtifactRepositoryServerProperties cfg) {
     this.cfg = cfg;
     hrefBuilder = new HrefBuilder(cfg);
     this.dao = dao;
@@ -72,7 +72,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         cfg.getTyped(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE),
         repositoryId,
         repositoryName,
-        cfg.getTyped(KnowledgeArtifactRepositoryOptions.SERVER_HOST)
+        null
     ).map(descr ->
         descr.withDefaultRepository(defaultRepositoryId.equals(repositoryId)));
   }

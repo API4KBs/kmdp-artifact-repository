@@ -15,8 +15,8 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotFound;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,7 +33,6 @@ import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifac
 import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.KnowledgeArtifactSeriesApi;
 import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.client.ApiClientFactory;
 import org.omg.spec.api4kp._20200801.id.Pointer;
-import org.omg.spec.api4kp._20200801.services.KPServer;
 import org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,7 +41,7 @@ class KnowledgeArtifactRepositoryAPITest extends IntegrationTestBase {
   private ApiClientFactory webClientFactory;
 
   @Autowired
-  KnowledgeArtifactRepositoryServerConfig cfg;
+  KnowledgeArtifactRepositoryServerProperties cfg;
 
   protected KnowledgeArtifactRepositoryApi repoApi;
   protected KnowledgeArtifactApi artApi;

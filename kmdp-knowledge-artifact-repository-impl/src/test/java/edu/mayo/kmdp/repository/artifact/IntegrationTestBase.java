@@ -15,11 +15,10 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
-
 import edu.mayo.kmdp.repository.artifact.IntegrationTestBase.CommonTestConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import org.omg.spec.api4kp._20200801.api.repository.artifact.v4.server.Swagger2SpringBoot;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -43,14 +42,19 @@ public abstract class IntegrationTestBase {
 
   public static class CommonTestConfig {
 
-    public static KnowledgeArtifactRepositoryServerConfig testCfg =
-        new KnowledgeArtifactRepositoryServerConfig()
-          .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
-          .with(DEFAULT_REPOSITORY_ID, "TestRepo");
+    @Value("${edu.mayo.kmdp.repository.artifact.identifier:default}")
+    private String repoId;
+    @Value("${edu.mayo.kmdp.repository.artifact.name:Default Artifact Repository}")
+    private String repoName;
+    @Value("${edu.mayo.kmdp.repository.artifact.namespace}")
+    private String namespace;
 
     @Bean
-    public KnowledgeArtifactRepositoryServerConfig cfg() {
-      return testCfg;
+    public KnowledgeArtifactRepositoryServerProperties cfg() {
+      return KnowledgeArtifactRepositoryServerProperties.emptyConfig()
+          .with(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID, repoId)
+          .with(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME, repoName)
+          .with(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE, namespace);
     }
   }
 

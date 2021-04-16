@@ -15,31 +15,32 @@
  */
 package edu.mayo.kmdp.repository.artifact;
 
+import static org.omg.spec.api4kp._20200801.services.URIPathHelper.knowledgeArtifactLocation;
+
 import java.net.URI;
-import org.apache.commons.lang3.StringUtils;
-import org.omg.spec.api4kp._20200801.services.URIPathHelper;
 
 public class HrefBuilder {
 
-  private String host;
+  protected String getHost() {
+    return "http:/";
+  }
 
-  public HrefBuilder(KnowledgeArtifactRepositoryServerConfig cfg) {
-    this.host = StringUtils
-        .removeEnd(cfg.getTyped(
-            KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.SERVER_HOST)
-            .toString(), "/");
+  public String getCurrentURL() {
+    return "";
+  }
+
+  public HrefBuilder(KnowledgeArtifactRepositoryServerProperties cfg) {
   }
 
   public URI getArtifactHref(String artifactId,
       String versionTag, String repositoryId) {
-    return URI.create(URIPathHelper.knowledgeArtifactLocation(host,
-        repositoryId, artifactId,
-        versionTag));
+    return URI.create(
+        knowledgeArtifactLocation(getHost(), repositoryId, artifactId, versionTag));
   }
 
   public URI getSeriesHref(String artifactId, String repositoryId) {
-    return URI.create(knowledgeArtifactSeriesLocation(host,
-        repositoryId, artifactId));
+    return URI.create(knowledgeArtifactSeriesLocation(
+        getHost(), repositoryId, artifactId));
   }
 
   public static String knowledgeArtifactSeriesLocation(String host, String repositoryId,

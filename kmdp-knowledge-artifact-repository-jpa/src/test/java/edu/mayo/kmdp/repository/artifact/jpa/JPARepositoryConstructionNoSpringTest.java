@@ -4,8 +4,8 @@ import static edu.mayo.kmdp.repository.artifact.jpa.JPAKnowledgeArtifactReposito
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
 import edu.mayo.kmdp.repository.artifact.jpa.entities.ArtifactVersionEntity;
 import edu.mayo.kmdp.repository.artifact.jpa.entities.KeyId;
@@ -20,12 +20,14 @@ import org.omg.spec.api4kp._20200801.id.Pointer;
 
 class JPARepositoryConstructionNoSpringTest {
 
-  KnowledgeArtifactRepositoryServerConfig cfg;
+  KnowledgeArtifactRepositoryServerProperties cfg =
+      new KnowledgeArtifactRepositoryServerProperties(
+          JPADaoNoSpringTest.class.getResourceAsStream("/application.test.properties"));
+
   String repoId;
 
   @BeforeEach
   void init() {
-    cfg = new KnowledgeArtifactRepositoryServerConfig();
     repoId = cfg.getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID);
   }
 
@@ -41,7 +43,7 @@ class JPARepositoryConstructionNoSpringTest {
   @Test
   void testEntityManager() {
     JPAKnowledgeArtifactRepository jpk =
-        (JPAKnowledgeArtifactRepository) inMemoryArtifactRepository();
+        (JPAKnowledgeArtifactRepository) inMemoryArtifactRepository(cfg);
     SimpleArtifactVersionRepository repo = (SimpleArtifactVersionRepository) jpk.getPersistenceLayer();
     EntityManager emRef = repo.emRef;
 

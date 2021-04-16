@@ -22,8 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.dao.Artifact;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
 import edu.mayo.kmdp.repository.artifact.dao.DaoResult;
@@ -54,7 +54,7 @@ class JPADaoTest {
   private JPAArtifactDAO dao;
 
   @Autowired
-  KnowledgeArtifactRepositoryServerConfig cfg;
+  KnowledgeArtifactRepositoryServerProperties cfg;
 
   private UUID artifactUUID;
   private UUID artifactUUID2;

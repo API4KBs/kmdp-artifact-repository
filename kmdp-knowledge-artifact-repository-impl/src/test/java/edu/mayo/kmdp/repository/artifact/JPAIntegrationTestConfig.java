@@ -1,13 +1,8 @@
 package edu.mayo.kmdp.repository.artifact;
 
-import static edu.mayo.kmdp.repository.artifact.IntegrationTestBase.CommonTestConfig.testCfg;
-
-import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
 import edu.mayo.kmdp.repository.artifact.jpa.JPAArtifactDAO;
 import edu.mayo.kmdp.repository.artifact.jpa.JPAKnowledgeArtifactRepository;
 import javax.sql.DataSource;
-import org.apache.jackrabbit.oak.Oak;
-import org.apache.jackrabbit.oak.jcr.Jcr;
 import org.omg.spec.api4kp._20200801.services.KPServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -29,6 +24,9 @@ public class JPAIntegrationTestConfig {
 
   @Autowired
   DataSource source;
+
+  @Autowired
+  KnowledgeArtifactRepositoryServerProperties testCfg;
 
   @Autowired
   JPAArtifactDAO dao;

@@ -3,8 +3,8 @@ package edu.mayo.kmdp.repository.artifact.jpa;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +30,7 @@ class JPARepositoryConstructionTest {
   JPAArtifactDAO dao;
 
   @Autowired
-  KnowledgeArtifactRepositoryServerConfig cfg;
+  KnowledgeArtifactRepositoryServerProperties cfg;
 
   KnowledgeArtifactRepositoryService repo;
   String repoId;

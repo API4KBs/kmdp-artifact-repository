@@ -15,17 +15,18 @@
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
+import java.util.Properties;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
 
 public interface OakKnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryService {
 
-  static KnowledgeArtifactRepositoryService inMemoryArtifactRepository() {
+  static KnowledgeArtifactRepositoryService inMemoryArtifactRepository(Properties properties) {
     return new JcrKnowledgeArtifactRepository(
         new JcrAdapter(new Jcr(new Oak()).createRepository()),
-        new KnowledgeArtifactRepositoryServerConfig());
+        new KnowledgeArtifactRepositoryServerProperties(properties));
   }
 
 }

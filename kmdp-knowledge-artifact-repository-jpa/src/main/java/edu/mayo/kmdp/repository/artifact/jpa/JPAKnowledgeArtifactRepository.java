@@ -17,7 +17,7 @@ package edu.mayo.kmdp.repository.artifact.jpa;
 
 
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryCore;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactDAO;
 import edu.mayo.kmdp.repository.artifact.jpa.stores.ArtifactVersionRepository;
 import javax.sql.DataSource;
@@ -28,7 +28,7 @@ public class JPAKnowledgeArtifactRepository extends KnowledgeArtifactRepositoryC
   implements JPAKnowledgeArtifactRepositoryService {
 
   public JPAKnowledgeArtifactRepository(ArtifactDAO dao,
-      KnowledgeArtifactRepositoryServerConfig cfg) {
+      KnowledgeArtifactRepositoryServerProperties cfg) {
     super(dao, cfg);
   }
 
@@ -38,7 +38,7 @@ public class JPAKnowledgeArtifactRepository extends KnowledgeArtifactRepositoryC
    * @param cfg
    */
   public JPAKnowledgeArtifactRepository(DataSource dao,
-      KnowledgeArtifactRepositoryServerConfig cfg) {
+      KnowledgeArtifactRepositoryServerProperties cfg) {
     super(new JPAArtifactDAO(dao,cfg), cfg);
   }
 

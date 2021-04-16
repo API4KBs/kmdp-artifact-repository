@@ -16,6 +16,7 @@
 package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static edu.mayo.kmdp.registry.Registry.BASE_UUID_URN;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.Created;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NoContent;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotFound;
@@ -24,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
@@ -60,9 +61,10 @@ class JcrKnowledgeArtifactRepositoryTest {
 
   @BeforeEach
   void repo() {
-    KnowledgeArtifactRepositoryServerConfig cfg =
-        new KnowledgeArtifactRepositoryServerConfig().with(
-            KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID, "1");
+    KnowledgeArtifactRepositoryServerProperties cfg =
+        new KnowledgeArtifactRepositoryServerProperties(
+            JcrKnowledgeArtifactRepositoryServiceTest.class.getResourceAsStream(
+                "/application.test.properties"));
 
     Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
 
@@ -196,7 +198,7 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/default/artifacts/" + artifactID,
+    assertEquals("http://repos/default/artifacts/" + artifactID,
         result.get(0).getHref().toString());
   }
 
@@ -229,8 +231,8 @@ class JcrKnowledgeArtifactRepositoryTest {
     Set<String> resultSet = result.stream().map(it -> it.getHref().toString())
         .collect(Collectors.toSet());
 
-    assertTrue(resultSet.contains("http://localhost:8080/repos/hey/artifacts/" + artifactID));
-    assertTrue(resultSet.contains("http://localhost:8080/repos/hey/artifacts/" + artifactID2));
+    assertTrue(resultSet.contains("http://repos/hey/artifacts/" + artifactID));
+    assertTrue(resultSet.contains("http://repos/hey/artifacts/" + artifactID2));
   }
 
   @Test
@@ -243,7 +245,7 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/repo/artifacts/" + artifactID,
+    assertEquals("http://repos/repo/artifacts/" + artifactID,
         result.get(0).getHref().toString());
   }
 
@@ -725,7 +727,7 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/default/artifacts/" + artifactID + "/versions/new",
+    assertEquals("http://repos/default/artifacts/" + artifactID + "/versions/new",
         result.get(0).getHref().toString());
   }
 

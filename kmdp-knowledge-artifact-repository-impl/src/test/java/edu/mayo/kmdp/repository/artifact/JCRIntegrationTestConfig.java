@@ -1,13 +1,10 @@
 package edu.mayo.kmdp.repository.artifact;
 
-import static edu.mayo.kmdp.repository.artifact.IntegrationTestBase.CommonTestConfig.testCfg;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
-
 import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
 import org.apache.jackrabbit.oak.Oak;
 import org.apache.jackrabbit.oak.jcr.Jcr;
 import org.omg.spec.api4kp._20200801.services.KPServer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +19,9 @@ import org.springframework.test.context.TestPropertySource;
 @EnableAutoConfiguration
 @ConditionalOnProperty(name = "spring.profiles.active", havingValue = "jcr")
 public class JCRIntegrationTestConfig {
+
+  @Autowired
+  KnowledgeArtifactRepositoryServerProperties testCfg;
 
   @Bean
   @KPServer

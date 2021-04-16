@@ -13,15 +13,11 @@
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
-import edu.mayo.kmdp.repository.artifact.jcr.JcrDao;
-import edu.mayo.kmdp.repository.artifact.jcr.JcrKnowledgeArtifactRepository;
 import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.util.Collections;
 import java.util.List;
@@ -40,13 +36,13 @@ class JcrKnowledgeArtifactRepositoryServiceTest {
 
   private static KnowledgeArtifactRepositoryService repo;
 
-  private static KnowledgeArtifactRepositoryServerConfig cfg =
-      new KnowledgeArtifactRepositoryServerConfig()
-          .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
-          .with(DEFAULT_REPOSITORY_ID, "TestRepo");
-
   @BeforeAll
   static void repo() {
+    KnowledgeArtifactRepositoryServerProperties cfg =
+        new KnowledgeArtifactRepositoryServerProperties(
+            JcrKnowledgeArtifactRepositoryServiceTest.class.getResourceAsStream(
+                "/application.test2.properties"));
+
     Repository jcr = new Jcr(new Oak()).with(new OpenSecurityProvider()).createRepository();
 
     JcrDao dao = new JcrDao(jcr);
@@ -61,8 +57,8 @@ class JcrKnowledgeArtifactRepositoryServiceTest {
 
   @Test
   void testListRepositoryWithDefault() {
-    Answer<List<KnowledgeArtifactRepository>> ans = repo
-        .listKnowledgeArtifactRepositories();
+    Answer<List<KnowledgeArtifactRepository>> ans =
+        repo.listKnowledgeArtifactRepositories();
     assertTrue(ans.isSuccess());
     assertEquals(1, ans.orElse(Collections.emptyList()).size());
 
@@ -72,15 +68,15 @@ class JcrKnowledgeArtifactRepositoryServiceTest {
 
   @Test
   void testSetRepositoryWithDefault() {
-    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans = repo
-        .setKnowledgeArtifactRepository("repository", new KnowledgeArtifactRepository());
+    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans =
+        repo.setKnowledgeArtifactRepository("repository", new KnowledgeArtifactRepository());
     assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 
   @Test
   void testInitRepositoryWithDefault() {
-    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans = repo
-        .initKnowledgeArtifactRepository();
+    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans =
+        repo.initKnowledgeArtifactRepository();
     assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 
@@ -93,22 +89,22 @@ class JcrKnowledgeArtifactRepositoryServiceTest {
 
   @Test
   void testGetRepositoryWithNonDefault() {
-    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans = repo
-        .getKnowledgeArtifactRepository("repository");
+    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans =
+        repo.getKnowledgeArtifactRepository("repository");
     assertEquals(ResponseCodeSeries.NotFound, ans.getOutcomeType());
   }
 
   @Test
   void testGetRepositoryWithDefault() {
-    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans = repo
-        .getKnowledgeArtifactRepository("TestRepo");
+    Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> ans =
+        repo.getKnowledgeArtifactRepository("TestRepo");
     assertEquals(ResponseCodeSeries.OK, ans.getOutcomeType());
   }
 
   @Test
   void testDisableRepositoryWithDefault() {
-    Answer<Void> ans = repo
-        .disableKnowledgeArtifactRepository("repository");
+    Answer<Void> ans =
+        repo.disableKnowledgeArtifactRepository("repository");
     assertEquals(ResponseCodeSeries.NotImplemented, ans.getOutcomeType());
   }
 

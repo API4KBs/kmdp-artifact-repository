@@ -2,8 +2,8 @@ package edu.mayo.kmdp.repository.artifact.jpa;
 
 import static edu.mayo.kmdp.repository.artifact.jpa.JPAResult.ofJPA;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.dao.Artifact;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactDAO;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
@@ -41,7 +41,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   private ArtifactVersionRepository versionRepo;
 
   @Autowired
-  private KnowledgeArtifactRepositoryServerConfig cfg;
+  private KnowledgeArtifactRepositoryServerProperties cfg;
 
   private String defaultRepositoryId;
 
@@ -54,7 +54,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
    * @param source
    * @param cfg
    */
-  public JPAArtifactDAO(DataSource source, KnowledgeArtifactRepositoryServerConfig cfg) {
+  public JPAArtifactDAO(DataSource source, KnowledgeArtifactRepositoryServerProperties cfg) {
     this.dataSource = source;
     this.cfg = cfg;
     this.versionRepo = SimpleArtifactVersionRepository.simpleRepo(source, cfg);
@@ -63,9 +63,6 @@ public class JPAArtifactDAO implements ArtifactDAO {
 
   @PostConstruct
   void ensureInit() {
-    if (cfg == null) {
-      cfg = new KnowledgeArtifactRepositoryServerConfig();
-    }
     if (defaultRepositoryId == null) {
       defaultRepositoryId = cfg.getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID);
     }

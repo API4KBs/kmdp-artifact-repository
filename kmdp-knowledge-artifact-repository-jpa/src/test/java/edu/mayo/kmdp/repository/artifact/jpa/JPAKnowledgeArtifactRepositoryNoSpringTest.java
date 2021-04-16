@@ -23,8 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
@@ -48,7 +48,9 @@ import org.springframework.http.HttpHeaders;
 class JPAKnowledgeArtifactRepositoryNoSpringTest {
 
 
-  KnowledgeArtifactRepositoryServerConfig cfg = new KnowledgeArtifactRepositoryServerConfig();
+  KnowledgeArtifactRepositoryServerProperties cfg =
+      new KnowledgeArtifactRepositoryServerProperties(
+          JPADaoNoSpringTest.class.getResourceAsStream("/application.test.properties"));
 
   JPAArtifactDAO dao;
 
@@ -194,7 +196,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/" + repoId + "/artifacts/" + artifactID,
+    assertEquals("http://repos/" + repoId + "/artifacts/" + artifactID,
         result.get(0).getHref().toString());
   }
 
@@ -227,8 +229,8 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
     Set<String> resultSet = result.stream().map(it -> it.getHref().toString())
         .collect(Collectors.toSet());
 
-    assertTrue(resultSet.contains("http://localhost:8080/repos/" + repoId + "/artifacts/" + artifactID));
-    assertTrue(resultSet.contains("http://localhost:8080/repos/" + repoId + "/artifacts/" + artifactID2));
+    assertTrue(resultSet.contains("http://repos/" + repoId + "/artifacts/" + artifactID));
+    assertTrue(resultSet.contains("http://repos/" + repoId + "/artifacts/" + artifactID2));
   }
 
   @Test
@@ -242,7 +244,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/" + localRepoId + "/artifacts/" + artifactID,
+    assertEquals("http://repos/" + localRepoId + "/artifacts/" + artifactID,
         result.get(0).getHref().toString());
   }
 
@@ -737,7 +739,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
 
     assertEquals(1, result.size());
 
-    assertEquals("http://localhost:8080/repos/" + repoId + "/artifacts/" + artifactID + "/versions/new",
+    assertEquals("http://repos/" + repoId + "/artifacts/" + artifactID + "/versions/new",
         result.get(0).getHref().toString());
   }
 

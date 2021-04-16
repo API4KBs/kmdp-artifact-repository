@@ -15,8 +15,9 @@
  */
 package edu.mayo.kmdp.repository.artifact.jpa;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryService;
+import java.util.Properties;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -35,14 +36,12 @@ public interface JPAKnowledgeArtifactRepositoryService extends KnowledgeArtifact
     return dataSourceBuilder.build();
   }
 
-  static KnowledgeArtifactRepositoryService inMemoryArtifactRepository() {
-    return inMemoryArtifactRepository(new KnowledgeArtifactRepositoryServerConfig());
-  }
 
   static KnowledgeArtifactRepositoryService inMemoryArtifactRepository(
-      KnowledgeArtifactRepositoryServerConfig cfg) {
+      Properties cfg) {
     return new JPAKnowledgeArtifactRepository(
-        inMemoryDataSource(), cfg);
+        inMemoryDataSource(),
+        new KnowledgeArtifactRepositoryServerProperties(cfg));
   }
 
 

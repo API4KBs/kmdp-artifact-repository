@@ -13,12 +13,12 @@
  */
 package edu.mayo.kmdp.repository.artifact.jpa;
 
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
+import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerConfig;
+import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
 import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.util.Collections;
 import java.util.List;
@@ -46,10 +46,8 @@ class JPAKnowledgeArtifactRepositoryServiceTest {
 
   static private JPAKnowledgeArtifactRepository repo;
 
-  private KnowledgeArtifactRepositoryServerConfig cfg =
-      new KnowledgeArtifactRepositoryServerConfig()
-          .with(DEFAULT_REPOSITORY_NAME, "TestRepository")
-          .with(DEFAULT_REPOSITORY_ID, "TestRepo");
+  @Autowired
+  private KnowledgeArtifactRepositoryServerProperties cfg;
 
   @BeforeEach
   void repo() {
