@@ -15,14 +15,26 @@
  */
 package edu.mayo.kmdp.repository.artifact.exceptions;
 
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.InternalServerError;
+
+import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
+import org.omg.spec.api4kp._20200801.ServerSideException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
-public class ResourceIdentificationException extends RuntimeException {
+public class ResourceIdentificationException extends ServerSideException {
+
+  public ResourceIdentificationException() {
+    this("No Content for this Resource");
+  }
 
   public ResourceIdentificationException(Exception e) {
-    super(e);
+    this(e.getMessage());
+  }
+
+  public ResourceIdentificationException(String msg) {
+    super(InternalServerError, msg);
   }
 
 }

@@ -13,25 +13,31 @@
  */
 package edu.mayo.kmdp.repository.artifact.exceptions;
 
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotFound;
 import static java.lang.String.format;
 
 import java.util.UUID;
+import org.omg.spec.api4kp._20200801.ServerSideException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.NOT_FOUND)
-public class ResourceNotFoundException extends RuntimeException {
+public class ResourceNotFoundException extends ServerSideException {
 
   public ResourceNotFoundException() {
-    super("Unable to find Artifact in Repository");
+    this("Unable to find Artifact in Repository");
   }
 
   public ResourceNotFoundException(UUID artifactId, String versionTag, String repositoryId) {
-    super(format("Unable to find %s:%s in Artifact repository %s", artifactId, versionTag, repositoryId));
+    this(format("Unable to find %s:%s in Artifact repository %s", artifactId, versionTag,
+        repositoryId));
   }
 
   public ResourceNotFoundException(UUID artifactId, String repositoryId) {
-    super(format("Unable to find %s in Artifact repository %s", artifactId, repositoryId));
+    this(format("Unable to find %s in Artifact repository %s", artifactId, repositoryId));
   }
 
+  public ResourceNotFoundException(String message) {
+    super(NotFound, message);
+  }
 }

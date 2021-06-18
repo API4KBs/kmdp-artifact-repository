@@ -1,22 +1,19 @@
 /**
  * Copyright © 2018 Mayo Clinic (RSTKNOWLEDGEMGMT@mayo.edu)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package edu.mayo.kmdp.repository.artifact.jcr;
 
 import static edu.mayo.kmdp.registry.Registry.BASE_UUID_URN;
-import static edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.Created;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NoContent;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotFound;
@@ -24,9 +21,10 @@ import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.O
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.omg.spec.api4kp._20200801.Answer.failed;
 
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
-import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
@@ -35,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -96,7 +95,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testListArtifactsRepoUnknown() {
     dao.saveResource("1", artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         RepositoryNotFoundException.class,
         () -> adapter
             .listKnowledgeArtifacts("none"));
@@ -125,7 +124,7 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     List<Pointer> pointers = adapter.listKnowledgeArtifacts("repository")
         .orElse(Collections.emptyList());
-    
+
     assertEquals(1, pointers.size());
   }
 
@@ -225,7 +224,7 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     List<Pointer> result = adapter.listKnowledgeArtifacts("hey")
         .orElse(Collections.emptyList());
-    
+
     assertEquals(2, result.size());
 
     Set<String> resultSet = result.stream().map(it -> it.getHref().toString())
@@ -274,7 +273,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     Answer<UUID> response = adapter.initKnowledgeArtifact("repository2");
     List<Pointer> artifacts = adapter.listKnowledgeArtifacts("repository2")
         .orElse(Collections.emptyList());
-    
+
     assertEquals(Created, response.getOutcomeType());
     assertEquals(1, artifacts.size());
   }
@@ -284,7 +283,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testGetLatestRepoUnknown() {
     dao.saveResource("1", artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter
             .getLatestKnowledgeArtifact("none", artifactID));
@@ -294,7 +293,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testGetLatestArtifactUnknown() {
     dao.saveResource("1", artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter
             .getLatestKnowledgeArtifact("1", artifactID2));
@@ -305,7 +304,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.saveResource("1", artifactID, "LATEST",
         "hi!".getBytes());
     dao.deleteResource("1", artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter
             .getLatestKnowledgeArtifact("1", artifactID));
@@ -371,7 +370,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.deleteResource("1", artifactID, "new");
     dao.deleteResource("1", artifactID, "LATEST");
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter
             .getLatestKnowledgeArtifact("1", artifactID));
@@ -381,7 +380,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testGetLatestEmptySeries() {
     dao.saveResource("1", artifactID);
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter
             .getLatestKnowledgeArtifact("1", artifactID));
@@ -391,7 +390,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testGetLatestEmptySeriesDeletedTrue() {
     dao.saveResource("1", artifactID);
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter
             .getLatestKnowledgeArtifact("1", artifactID));
@@ -401,7 +400,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void checkSeriesAvailableUnknownRepo() {
     dao.saveResource("repository", artifactID, "new", "document".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         RepositoryNotFoundException.class,
         () -> adapter.isKnowledgeArtifactSeries("repository1", artifactID));
   }
@@ -442,7 +441,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void checkSeriesUnavailableDeletedFalse() {
     dao.saveResource("repository", artifactID);
     dao.deleteResource("repository", artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter.isKnowledgeArtifactSeries("repository", artifactID));
   }
@@ -462,7 +461,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testEnableSeriesRepoUnknown() {
     dao.saveResource("1", artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter
             .enableKnowledgeArtifact("none", artifactID));
@@ -516,7 +515,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     List<Pointer> versions = adapter
         .getKnowledgeArtifactSeries("repositoryId", artifactID)
         .orElse(Collections.emptyList());
-    
+
     assertEquals(Created, response.getOutcomeType());
     assertEquals(2, versions.size());
   }
@@ -536,7 +535,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testRemoveSeriesRepoUnknown() {
     dao.saveResource("1", artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter
             .deleteKnowledgeArtifact("none", artifactID));
@@ -546,7 +545,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testRemoveSeriesArtifactUnknown() {
     dao.saveResource("1", artifactID2, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter
             .deleteKnowledgeArtifact("1", artifactID));
@@ -563,7 +562,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     Answer<Void> responseEntity = adapter
         .deleteKnowledgeArtifact("1", artifactID2);
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter
             .getKnowledgeArtifactSeries("1", artifactID2));
@@ -612,7 +611,8 @@ class JcrKnowledgeArtifactRepositoryTest {
 
     List<Pointer> results = adapter
         .getKnowledgeArtifactSeries("1", artifactID)
-            .orElse(Collections.emptyList());;
+        .orElse(Collections.emptyList());
+    ;
 
     assertEquals(2, results.size());
   }
@@ -620,7 +620,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testListVersionsUnknownRepo() {
     dao.saveResource("1", artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.getKnowledgeArtifactSeries("2", artifactID));
   }
@@ -628,7 +628,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testListVersionsUnknownArtifactId() {
     dao.saveResource("1", artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.getKnowledgeArtifactSeries("1", artifactID2));
   }
@@ -691,7 +691,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testListVersionsUnavailableSeries() {
     dao.saveResource("1", artifactID, "new", "hi!".getBytes());
     dao.deleteResource("1", artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter.getKnowledgeArtifactSeries("1", artifactID));
   }
@@ -784,7 +784,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testAddArtifactSeriesReturnsLocation() {
     Answer<Void> response = adapter
-      .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
+        .addKnowledgeArtifactVersion("default", artifactID2, "hi!".getBytes());
     String location = response.getMeta(HttpHeaders.LOCATION).orElse("").toString();
     String artifact = StringUtils.substringBetween(location, "artifacts/", "/versions");
     String repo = StringUtils.substringBetween(location, "repos/", "/artifact");
@@ -811,7 +811,7 @@ class JcrKnowledgeArtifactRepositoryTest {
     dao.saveResource("1", artifactID, "new", "hi!".getBytes());
     dao.deleteResource("1", artifactID, "new");
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter.getKnowledgeArtifactVersion("1", artifactID, "new", false));
   }
@@ -830,7 +830,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testGetVersionRepoNotKnown() {
     dao.saveResource("differentRepo", artifactID, "differentVersion", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.getKnowledgeArtifactVersion("1", artifactID, "new"));
   }
@@ -838,7 +838,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testGetVersionSeriesNotKnown() {
     dao.saveResource("1", artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.getKnowledgeArtifactVersion("1", artifactID2, "new"));
   }
@@ -846,7 +846,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testGetVersionVersionNotKnown() {
     dao.saveResource("1", artifactID, "differentVersion", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.getKnowledgeArtifactVersion("1", artifactID, "new"));
   }
@@ -854,7 +854,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testGetVersionSeriesEmpty() {
     dao.saveResource("1", artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.getKnowledgeArtifactVersion("1", artifactID, "new"));
   }
@@ -863,7 +863,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testCheckVersionUnknownRepo() {
     dao.saveResource("repo1", artifactID, "version", "hello".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.isKnowledgeArtifactVersion("repo2", artifactID, "new"));
   }
@@ -871,7 +871,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testCheckVersionUnknownArtifact() {
     dao.saveResource("repo1", artifactID, "version", "hello".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.isKnowledgeArtifactVersion("repo1", artifactID2, "new"));
   }
@@ -879,7 +879,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testCheckVersionUnknownVersion() {
     dao.saveResource("repo1", artifactID, "version", "hello".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.isKnowledgeArtifactVersion("repo1", artifactID, "new"));
 
@@ -906,7 +906,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testCheckVersionUnavailableDeletedFalse() {
     dao.saveResource("repo1", artifactID, "version", "hello".getBytes());
     dao.deleteResource("repo1", artifactID, "version");
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter.isKnowledgeArtifactVersion("repo1", artifactID, "version"));
   }
@@ -915,7 +915,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   void testCheckVersionArtifactUnavailableDeletedFalse() {
     dao.saveResource("repo1", artifactID, "version", "hello".getBytes());
     dao.deleteResource("repo1", artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> adapter.isKnowledgeArtifactVersion("repo1", artifactID, "version"));
   }
@@ -935,7 +935,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testEnsureRepositoryUnknown() {
     dao.saveResource("repository", artifactID, "version", "thisExists".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.enableKnowledgeArtifactVersion("repository2", artifactID, "version"));
 
@@ -944,7 +944,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testEnsureArtifactUnknown() {
     dao.saveResource("repository", artifactID, "version", "thisExists".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.enableKnowledgeArtifactVersion("repository", artifactID2, "version"));
 
@@ -953,7 +953,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testEnsureVersionUnknown() {
     dao.saveResource("repository", artifactID, "version", "thisExists".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.enableKnowledgeArtifactVersion("repository", artifactID, "version2"));
 
@@ -1101,7 +1101,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testDeleteVersionNoArtifact() {
     dao.saveResource("1", artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.deleteKnowledgeArtifactVersion("1", artifactID2, "new", false));
   }
@@ -1109,7 +1109,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testDeleteVersionNoVersion() {
     dao.saveResource("1", artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.deleteKnowledgeArtifactVersion("1", artifactID, "none"));
   }
@@ -1117,7 +1117,7 @@ class JcrKnowledgeArtifactRepositoryTest {
   @Test
   void testDeleteVersionNoRepo() {
     dao.saveResource("different", artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> adapter.deleteKnowledgeArtifactVersion("1", artifactID, "none"));
   }
@@ -1162,6 +1162,19 @@ class JcrKnowledgeArtifactRepositoryTest {
       return v.getFrozenNode().getProperty("status").getString();
     } catch (RepositoryException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private <T> void assertThrowsCaught(
+      Class<? extends Exception> exceptionType,
+      Supplier<Answer<T>> method) {
+    try {
+      Answer<T> ans = method.get();
+      assertTrue(
+          ans.getOutcomeType().sameAs(
+              failed(exceptionType.getConstructor().newInstance()).getOutcomeType()));
+    } catch (Exception e) {
+      fail(e.getMessage(), e);
     }
   }
 

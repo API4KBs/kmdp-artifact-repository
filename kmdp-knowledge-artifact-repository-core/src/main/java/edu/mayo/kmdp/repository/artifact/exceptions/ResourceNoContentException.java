@@ -15,20 +15,27 @@
  */
 package edu.mayo.kmdp.repository.artifact.exceptions;
 
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NoContent;
 import static java.lang.String.format;
 
+import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.util.UUID;
+import org.omg.spec.api4kp._20200801.ServerSideException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.NO_CONTENT)
-public class ResourceNoContentException extends RuntimeException {
+public class ResourceNoContentException extends ServerSideException {
+
+  public ResourceNoContentException() {
+    this("No Content for this Resource");
+  }
 
   public ResourceNoContentException(String message) {
-    super(message);
+    super(NoContent, message);
   }
 
   public ResourceNoContentException(UUID artifactId, String repositoryId) {
-    super(format("No Artifacts associated to %s in Repository %s", artifactId, repositoryId));
+    this(format("No Artifacts associated to %s in Repository %s", artifactId, repositoryId));
   }
 }

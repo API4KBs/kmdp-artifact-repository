@@ -15,14 +15,21 @@
  */
 package edu.mayo.kmdp.repository.artifact.exceptions;
 
+import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotFound;
+
+import org.omg.spec.api4kp._20200801.ServerSideException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.NOT_FOUND)
-public class RepositoryNotFoundException extends RuntimeException {
+public class RepositoryNotFoundException extends ServerSideException {
+
+  public RepositoryNotFoundException() {
+    this("(default)");
+  }
 
   public RepositoryNotFoundException(String id) {
-    super("Repository not found: " + id);
+    super(NotFound, "Repository not found: " + id);
   }
 
 }

@@ -36,11 +36,16 @@ import org.omg.spec.api4kp._20200801.PlatformComponentHelper;
 import org.omg.spec.api4kp._20200801.id.Pointer;
 import org.omg.spec.api4kp._20200801.id.ResourceIdentifier;
 import org.omg.spec.api4kp._20200801.id.SemanticIdentifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 
 
 public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     ClearableKnowledgeArtifactRepositoryService {
+
+  private static final Logger logger =
+      LoggerFactory.getLogger(KnowledgeArtifactRepositoryCore.class);
 
   protected KnowledgeArtifactRepositoryServerProperties cfg;
   protected HrefBuilder hrefBuilder;
@@ -138,6 +143,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
           .collect(Collectors.toList());
 
       return Answer.of(pointers);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
@@ -148,6 +156,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     try (DaoResult<Artifact> ignored = dao
         .saveResource(repositoryId, artifactId)) {
       return Answer.of(ResponseCodeSeries.Created, artifactId);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
@@ -164,41 +175,60 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         .getLatestResourceVersion(repositoryId, artifactId, deleted)) {
       ArtifactVersion version = result.getValue();
       return Answer.of(getData(repositoryId, version));
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
   @Override
   public Answer<Void> isKnowledgeArtifactSeries(String repositoryId, UUID artifactId,
       Boolean deleted) {
-    boolean seriesExist = dao.hasResourceSeries(repositoryId, artifactId).getValue();
-    if (seriesExist) {
-      boolean contentExist = dao.hasResourceVersions(repositoryId, artifactId, deleted).getValue();
-      if (contentExist) {
-        return Answer.succeed();
+    try {
+      boolean seriesExist = dao.hasResourceSeries(repositoryId, artifactId).getValue();
+      if (seriesExist) {
+        boolean contentExist = dao.hasResourceVersions(repositoryId, artifactId, deleted)
+            .getValue();
+        if (contentExist) {
+          return Answer.succeed();
+        } else {
+          return Answer.of(NoContent);
+        }
       } else {
-        return Answer.of(NoContent);
+        return Answer.notFound();
       }
-    } else {
-      return Answer.notFound();
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
   @Override
   public Answer<Void> enableKnowledgeArtifact(String repositoryId,
       UUID artifactId) {
-    dao.enableResourceSeries(repositoryId, artifactId);
-    return Answer.of(ResponseCodeSeries.Created);
+    try {
+      dao.enableResourceSeries(repositoryId, artifactId);
+      return Answer.of(ResponseCodeSeries.Created);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
+    }
   }
 
   @Override
   public Answer<Void> deleteKnowledgeArtifact(String repositoryId, UUID artifactId,
       Boolean deleted) {
-    if ((Boolean.TRUE.equals(deleted))) {
-      dao.removeResourceSeries(repositoryId, artifactId);
-    } else {
-      dao.deleteResourceSeries(repositoryId, artifactId);
+    try {
+      if ((Boolean.TRUE.equals(deleted))) {
+        dao.removeResourceSeries(repositoryId, artifactId);
+      } else {
+        dao.deleteResourceSeries(repositoryId, artifactId);
+      }
+      return Answer.of(NoContent);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
-    return Answer.of(NoContent);
   }
 
   @Override
@@ -214,6 +244,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
           : Answer.of(versions.stream()
               .map(version -> versionToPointer(version, repositoryId))
               .collect(Collectors.toList()));
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
@@ -226,6 +259,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         .saveResource(repositoryId, artifactId, versionId, document, emptyMap())) {
       URI location = versionToPointer(result.getValue(), repositoryId).getHref();
       return Answer.referTo(location, true);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
@@ -241,6 +277,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       ArtifactVersion version = result.getValue();
 
       return Answer.of(getData(repositoryId, version));
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
@@ -250,13 +289,21 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     try (DaoResult<ArtifactVersion> ignored = dao
         .getResourceVersion(repositoryId, artifactId, versionTag, deleted)) {
       return Answer.of(ResponseCodeSeries.OK);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
   public Answer<Void> enableKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
-    dao.enableResourceVersion(repositoryId, artifactId, versionTag);
-    return Answer.of(NoContent);
+    try {
+      dao.enableResourceVersion(repositoryId, artifactId, versionTag);
+      return Answer.of(NoContent);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
+    }
   }
 
   @Override
@@ -266,18 +313,26 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         .saveResource(repositoryId, artifactId, versionTag, document, emptyMap())) {
 
       return Answer.of(NoContent);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
   }
 
   @Override
   public Answer<Void> deleteKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
-    if (Boolean.TRUE.equals(deleted)) {
-      dao.removeResourceVersion(repositoryId, artifactId, versionTag);
-    } else {
-      dao.deleteResourceVersion(repositoryId, artifactId, versionTag);
+    try {
+      if (Boolean.TRUE.equals(deleted)) {
+        dao.removeResourceVersion(repositoryId, artifactId, versionTag);
+      } else {
+        dao.deleteResourceVersion(repositoryId, artifactId, versionTag);
+      }
+      return Answer.of(NoContent);
+    } catch (Exception e) {
+      logger.error(e.getMessage(),e);
+      return Answer.failed(e);
     }
-    return Answer.of(NoContent);
   }
 
 
@@ -302,6 +357,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
           artifactId, "",
           versionTag, hrefBuilder.getArtifactHref(artifactId, versionTag, repositoryId));
     } catch (Exception e) {
+      logger.error(e.getMessage(),e);
       throw new ResourceIdentificationException(e);
     }
   }
@@ -314,6 +370,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
 
       return pointer;
     } catch (Exception e) {
+      logger.error(e.getMessage(),e);
       throw new ResourceIdentificationException(e);
     }
   }

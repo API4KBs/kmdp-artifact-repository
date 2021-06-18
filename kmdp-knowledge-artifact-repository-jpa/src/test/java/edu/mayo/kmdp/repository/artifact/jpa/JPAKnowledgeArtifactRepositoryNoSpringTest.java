@@ -20,8 +20,9 @@ import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.N
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.NotFound;
 import static edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries.OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.omg.spec.api4kp._20200801.Answer.failed;
 
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties;
 import edu.mayo.kmdp.repository.artifact.KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions;
@@ -34,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -92,7 +94,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testListArtifactsRepoUnknown() {
     dao.saveResource("unknown", artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         RepositoryNotFoundException.class,
         () -> repository
             .listKnowledgeArtifacts("none"));
@@ -283,7 +285,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testGetLatestRepoUnknown() {
     dao.saveResource(repoId, artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         RepositoryNotFoundException.class,
         () -> repository
             .getLatestKnowledgeArtifact("none", artifactID));
@@ -293,7 +295,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testGetLatestArtifactUnknown() {
     dao.saveResource(repoId, artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository
             .getLatestKnowledgeArtifact(repoId, artifactID2));
@@ -304,7 +306,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
     dao.saveResource(repoId, artifactID, "LATEST",
         "hi!".getBytes());
     dao.deleteResourceSeries(repoId, artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> repository
             .getLatestKnowledgeArtifact(repoId, artifactID));
@@ -370,7 +372,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
     dao.deleteResourceVersion(repoId, artifactID, "new");
     dao.deleteResourceVersion(repoId, artifactID, "LATEST");
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> repository
             .getLatestKnowledgeArtifact(repoId, artifactID));
@@ -383,7 +385,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
     assertTrue(dao.hasResourceSeries(repoId, artifactID, false));
     assertTrue(dao.hasResourceSeries(repoId, artifactID, true));
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> repository
             .getLatestKnowledgeArtifact(repoId, artifactID));
@@ -393,7 +395,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testGetLatestEmptySeriesDeletedTrue() {
     dao.saveResource(repoId, artifactID);
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> repository
             .getLatestKnowledgeArtifact(repoId, artifactID));
@@ -471,7 +473,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testEnableSeriesRepoUnknown() {
     dao.saveResource(repoId, artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         RepositoryNotFoundException.class,
         () -> repository
             .enableKnowledgeArtifact("none", artifactID));
@@ -546,7 +548,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testRemoveSeriesRepoUnknown() {
     dao.saveResource(repoId, artifactID, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository
             .deleteKnowledgeArtifact("none", artifactID));
@@ -556,7 +558,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testRemoveSeriesArtifactUnknown() {
     dao.saveResource(repoId, artifactID2, "LATEST",
         "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository
             .deleteKnowledgeArtifact(repoId, artifactID));
@@ -573,7 +575,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
     Answer<Void> responseEntity = repository
         .deleteKnowledgeArtifact(repoId, artifactID2);
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> repository
             .getKnowledgeArtifactSeries(repoId, artifactID2));
@@ -632,7 +634,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testListVersionsUnknownRepo() {
     dao.saveResource(repoId, artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.getKnowledgeArtifactSeries("2", artifactID));
   }
@@ -640,7 +642,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testListVersionsUnknownArtifactId() {
     dao.saveResource(repoId, artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.getKnowledgeArtifactSeries(repoId, artifactID2));
   }
@@ -703,7 +705,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testListVersionsUnavailableSeries() {
     dao.saveResource(repoId, artifactID, "new", "hi!".getBytes());
     dao.deleteResourceSeries(repoId, artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNoContentException.class,
         () -> repository.getKnowledgeArtifactSeries(repoId, artifactID));
   }
@@ -825,7 +827,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
 
     assertTrue(dao.hasResourceSeries(repoId, artifactID, false));
 
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.getKnowledgeArtifactVersion(repoId, artifactID, "new", false));
   }
@@ -844,7 +846,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testGetVersionRepoNotKnown() {
     dao.saveResource(repoId, artifactID, "someVersion", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         RepositoryNotFoundException.class,
         () -> repository.getKnowledgeArtifactVersion("differentRepo", artifactID, "new"));
   }
@@ -852,7 +854,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testGetVersionSeriesNotKnown() {
     dao.saveResource(repoId, artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.getKnowledgeArtifactVersion(repoId, artifactID2, "new"));
   }
@@ -860,7 +862,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testGetVersionVersionNotKnown() {
     dao.saveResource(repoId, artifactID, "differentVersion", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.getKnowledgeArtifactVersion(repoId, artifactID, "new"));
   }
@@ -868,7 +870,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testGetVersionSeriesEmpty() {
     dao.saveResource(repoId, artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.getKnowledgeArtifactVersion(repoId, artifactID, "new"));
   }
@@ -877,7 +879,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testCheckVersionUnknownRepo() {
     dao.saveResource(repoId, artifactID, "version", "hello".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         RepositoryNotFoundException.class,
         () -> repository.isKnowledgeArtifactVersion("repo2", artifactID, "new"));
   }
@@ -885,7 +887,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testCheckVersionUnknownArtifact() {
     dao.saveResource(repoId, artifactID, "version", "hello".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.isKnowledgeArtifactVersion(repoId, artifactID2, "new"));
   }
@@ -893,7 +895,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testCheckVersionUnknownVersion() {
     dao.saveResource(repoId, artifactID, "version", "hello".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.isKnowledgeArtifactVersion(repoId, artifactID, "new"));
 
@@ -920,7 +922,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testCheckVersionUnavailableDeletedFalse() {
     dao.saveResource(repoId, artifactID, "version", "hello".getBytes());
     dao.deleteResourceVersion(repoId, artifactID, "version");
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.isKnowledgeArtifactVersion(repoId, artifactID, "version"));
   }
@@ -929,7 +931,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   void testCheckVersionArtifactUnavailableDeletedFalse() {
     dao.saveResource(repoId, artifactID, "version", "hello".getBytes());
     dao.deleteResourceSeries(repoId, artifactID);
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.isKnowledgeArtifactVersion(repoId, artifactID, "version"));
   }
@@ -949,7 +951,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testEnsureRepositoryUnknown() {
     dao.saveResource(repoId, artifactID, "version", "thisExists".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         RepositoryNotFoundException.class,
         () -> repository.enableKnowledgeArtifactVersion("repository2", artifactID, "version"));
 
@@ -958,7 +960,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testEnsureArtifactUnknown() {
     dao.saveResource(repoId, artifactID, "version", "thisExists".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.enableKnowledgeArtifactVersion(repoId, artifactID2, "version"));
 
@@ -967,7 +969,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testEnsureVersionUnknown() {
     dao.saveResource(repoId, artifactID, "version", "thisExists".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.enableKnowledgeArtifactVersion(repoId, artifactID, "version2"));
 
@@ -1116,7 +1118,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testDeleteVersionNoArtifact() {
     dao.saveResource(repoId, artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.deleteKnowledgeArtifactVersion(repoId, artifactID2, "new", false));
   }
@@ -1124,7 +1126,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testDeleteVersionNoVersion() {
     dao.saveResource(repoId, artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.deleteKnowledgeArtifactVersion(repoId, artifactID, "none"));
   }
@@ -1132,7 +1134,7 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
   @Test
   void testDeleteVersionNoRepo() {
     dao.saveResource(repoId, artifactID, "new", "hi!".getBytes());
-    assertThrows(
+    assertThrowsCaught(
         ResourceNotFoundException.class,
         () -> repository.deleteKnowledgeArtifactVersion(repoId, artifactID, "none"));
   }
@@ -1169,6 +1171,19 @@ class JPAKnowledgeArtifactRepositoryNoSpringTest {
         .orElseGet(Assertions::fail);
   }
 
+
+  private <T> void assertThrowsCaught(
+      Class<? extends Exception> exceptionType,
+      Supplier<Answer<T>> method) {
+    try {
+      Answer<T> ans = method.get();
+      assertTrue(
+          ans.getOutcomeType().sameAs(
+              failed(exceptionType.getConstructor().newInstance()).getOutcomeType()));
+    } catch (Exception e) {
+      fail(e.getMessage(), e);
+    }
+  }
 }
 
 
