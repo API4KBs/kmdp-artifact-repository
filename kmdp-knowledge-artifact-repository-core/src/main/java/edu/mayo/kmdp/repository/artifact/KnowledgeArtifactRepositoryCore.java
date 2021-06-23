@@ -24,6 +24,7 @@ import edu.mayo.kmdp.repository.artifact.dao.ArtifactDAO;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
 import edu.mayo.kmdp.repository.artifact.dao.DaoResult;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceIdentificationException;
+import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
 import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.net.URI;
 import java.util.Collections;
@@ -175,6 +176,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         .getLatestResourceVersion(repositoryId, artifactId, deleted)) {
       ArtifactVersion version = result.getValue();
       return Answer.of(getData(repositoryId, version));
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -197,6 +201,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       } else {
         return Answer.notFound();
       }
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -209,6 +216,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     try {
       dao.enableResourceSeries(repositoryId, artifactId);
       return Answer.of(ResponseCodeSeries.Created);
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -225,6 +235,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         dao.deleteResourceSeries(repositoryId, artifactId);
       }
       return Answer.of(NoContent);
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -244,6 +257,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
           : Answer.of(versions.stream()
               .map(version -> versionToPointer(version, repositoryId))
               .collect(Collectors.toList()));
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -259,6 +275,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         .saveResource(repositoryId, artifactId, versionId, document, emptyMap())) {
       URI location = versionToPointer(result.getValue(), repositoryId).getHref();
       return Answer.referTo(location, true);
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -277,6 +296,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       ArtifactVersion version = result.getValue();
 
       return Answer.of(getData(repositoryId, version));
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -289,6 +311,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     try (DaoResult<ArtifactVersion> ignored = dao
         .getResourceVersion(repositoryId, artifactId, versionTag, deleted)) {
       return Answer.of(ResponseCodeSeries.OK);
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -300,6 +325,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
     try {
       dao.enableResourceVersion(repositoryId, artifactId, versionTag);
       return Answer.of(NoContent);
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);
@@ -329,6 +357,9 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         dao.deleteResourceVersion(repositoryId, artifactId, versionTag);
       }
       return Answer.of(NoContent);
+    } catch (ResourceNotFoundException rnfe) {
+      logger.warn(rnfe.getMessage(),rnfe);
+      return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
       return Answer.failed(e);

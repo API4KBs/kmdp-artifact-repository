@@ -253,7 +253,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
     InputStream is = ((ArtifactVersionEntity) version).getDataStream();
     return FileUtil.readBytes(is)
         .orElseThrow(() -> new ResourceNoContentException(
-            "Unable to load binary for " + version.toString()));
+            "Unable to load binary for " + version));
   }
 
   /***********************************************************************************/
@@ -267,7 +267,8 @@ public class JPAArtifactDAO implements ArtifactDAO {
       checkSeries(repositoryId, artifactId);
       checkHasRepository(repositoryId);
     }
-    return series.orElseThrow();
+    return series
+        .orElseThrow(() -> new ResourceNotFoundException(artifactId, null, repositoryId));
   }
 
 
@@ -335,7 +336,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
     if (version.isEmpty()) {
       checkAll(repositoryId, artifactId);
     }
-    return version.orElseThrow();
+    return version.orElseThrow(() -> new ResourceNotFoundException(artifactId,null,repositoryId));
   }
 
 
