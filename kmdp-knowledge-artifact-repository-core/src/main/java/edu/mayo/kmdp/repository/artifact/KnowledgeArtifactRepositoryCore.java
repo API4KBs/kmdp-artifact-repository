@@ -177,7 +177,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       ArtifactVersion version = result.getValue();
       return Answer.of(getData(repositoryId, version));
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -202,7 +202,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         return Answer.notFound();
       }
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -217,7 +217,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       dao.enableResourceSeries(repositoryId, artifactId);
       return Answer.of(ResponseCodeSeries.Created);
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -236,7 +236,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       }
       return Answer.of(NoContent);
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -258,7 +258,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
               .map(version -> versionToPointer(version, repositoryId))
               .collect(Collectors.toList()));
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -276,7 +276,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       URI location = versionToPointer(result.getValue(), repositoryId).getHref();
       return Answer.referTo(location, true);
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -297,7 +297,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
 
       return Answer.of(getData(repositoryId, version));
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -312,7 +312,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         .getResourceVersion(repositoryId, artifactId, versionTag, deleted)) {
       return Answer.of(ResponseCodeSeries.OK);
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -326,7 +326,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       dao.enableResourceVersion(repositoryId, artifactId, versionTag);
       return Answer.of(NoContent);
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
@@ -358,7 +358,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       }
       return Answer.of(NoContent);
     } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage(),rnfe);
+      logger.warn(rnfe.getMessage());
       return Answer.failed(rnfe);
     } catch (Exception e) {
       logger.error(e.getMessage(),e);
