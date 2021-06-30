@@ -9,8 +9,10 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+@Transactional
 public interface ArtifactVersionRepository extends CrudRepository<ArtifactVersionEntity, KeyId> {
 
   List<Artifact> findAllByKey_RepositoryIdAndSeries(

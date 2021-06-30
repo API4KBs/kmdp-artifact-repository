@@ -30,6 +30,7 @@ import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class JPAArtifactDAO implements ArtifactDAO {
@@ -81,6 +82,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  @Transactional
   public void clear() {
     versionRepo.deleteAll();
   }
@@ -154,12 +156,14 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  @Transactional
   public void deleteResourceVersion(String repositoryId, UUID artifactId, String versionTag) {
     versionRepo.save(fetchArtifactVersion(repositoryId, artifactId, versionTag, true)
         .withSoftDeleted(true));
   }
 
   @Override
+  @Transactional
   public void removeResourceVersion(String repositoryId, UUID artifactId, String versionTag) {
     if (versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndKey_VersionTag(
         repositoryId, artifactId, versionTag)) {
@@ -168,6 +172,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  @Transactional
   public void deleteResourceSeries(String repositoryId, UUID artifactId) {
     List<ArtifactVersionEntity> versions =
         fetchAllArtifactVersions(repositoryId, artifactId, true).stream()
@@ -181,6 +186,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  @Transactional
   public void removeResourceSeries(String repositoryId, UUID artifactId) {
     if (versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndSeries(
         repositoryId, artifactId, true)) {
@@ -189,6 +195,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  @Transactional
   public void enableResourceVersion(String repositoryId, UUID artifactId, String versionTag) {
     ArtifactVersionEntity version = fetchArtifactVersion(repositoryId, artifactId, versionTag, true);
     if (version.isUnavailable()) {
@@ -197,6 +204,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  @Transactional
   public void enableResourceSeries(String repositoryId, UUID artifactId) {
     Optional<ArtifactVersionEntity> series = tryFetchArtifactSeries(repositoryId, artifactId);
     if (series.isPresent() && series.get().isUnavailable()) {
@@ -216,6 +224,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  @Transactional
   public DaoResult<ArtifactVersion> saveResource(String repositoryId, UUID artifactId,
       String versionTag, byte[] document, Map<String, String> config) {
 
@@ -232,6 +241,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
+  @Transactional
   public DaoResult<Artifact> saveResource(String repositoryId, UUID artifactId) {
 
     Optional<ArtifactVersionEntity> seriesOpt = tryFetchArtifactSeries(repositoryId, artifactId);
