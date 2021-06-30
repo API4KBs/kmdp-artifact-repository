@@ -630,7 +630,6 @@ class JPAKnowledgeArtifactRepositoryTest {
     List<Pointer> results = repository
         .getKnowledgeArtifactSeries(repoId, artifactID)
         .orElse(Collections.emptyList());
-    ;
 
     assertEquals(2, results.size());
   }
@@ -1166,6 +1165,16 @@ class JPAKnowledgeArtifactRepositoryTest {
     Answer<Void> response = repository
         .deleteKnowledgeArtifactVersion(repoId, artifactID, "new", true);
     assertEquals(NoContent, response.getOutcomeType());
+  }
+
+  @Test
+  void testHardDeleteArtifactVersion() {
+    dao.saveResource(repoId, artifactID, "new", "hi!".getBytes());
+    Answer<Void> response = repository
+        .deleteKnowledgeArtifactVersion(repoId, artifactID, "new", true);
+    assertEquals(NoContent, response.getOutcomeType());
+    assertTrue(dao.tryFetchArtifactVersion(
+        repoId, artifactID, "new", true).isEmpty());
   }
 
   String getPayload(ArtifactVersion v) {

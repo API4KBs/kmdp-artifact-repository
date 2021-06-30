@@ -161,8 +161,8 @@ public class JPAArtifactDAO implements ArtifactDAO {
 
   @Override
   public void removeResourceVersion(String repositoryId, UUID artifactId, String versionTag) {
-    if (versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndKey_VersionTagAndSoftDeleted(
-        repositoryId, artifactId, versionTag, true)) {
+    if (versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndKey_VersionTag(
+        repositoryId, artifactId, versionTag)) {
       versionRepo.deleteById(new KeyId(repositoryId, artifactId, versionTag));
     }
   }

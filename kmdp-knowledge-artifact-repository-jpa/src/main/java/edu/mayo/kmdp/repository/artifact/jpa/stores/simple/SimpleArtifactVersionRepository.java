@@ -262,6 +262,18 @@ public class SimpleArtifactVersionRepository
   }
 
   @Override
+  public boolean existsByKey_RepositoryIdAndKey_ArtifactIdAndKey_VersionTag(String repositoryId,
+      UUID artifactId, String versionTag) {
+    return exists(
+        Example.of(
+            pattern()
+                .withRepositoryId(repositoryId)
+                .withArtifactId(artifactId)
+                .withVersionTag(versionTag)
+        ));
+  }
+
+  @Override
   public void deleteById(KeyId keyId) {
     if (this.existsById(keyId)) {
       EntityTransaction tx = emRef.getTransaction();
