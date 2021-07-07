@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
@@ -183,4 +184,20 @@ public class ArtifactVersionEntity implements Artifact, ArtifactVersion,
     return this;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ArtifactVersionEntity that = (ArtifactVersionEntity) o;
+    return key.equals(that.key);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(key);
+  }
 }
