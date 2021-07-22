@@ -23,7 +23,8 @@ import edu.mayo.kmdp.repository.artifact.dao.Artifact;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactDAO;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
 import edu.mayo.kmdp.repository.artifact.dao.DaoResult;
-import edu.mayo.kmdp.repository.artifact.exceptions.ResourceIdentificationException;
+import edu.mayo.kmdp.repository.artifact.exceptions.DaoRuntimeException;
+import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
 import edu.mayo.ontology.taxonomies.ws.responsecodes.ResponseCodeSeries;
 import java.net.URI;
@@ -34,8 +35,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.omg.spec.api4kp._20200801.Answer;
 import org.omg.spec.api4kp._20200801.PlatformComponentHelper;
+import org.omg.spec.api4kp._20200801.aspects.Failsafe;
+import org.omg.spec.api4kp._20200801.aspects.LogLevel;
+import org.omg.spec.api4kp._20200801.aspects.Loggable;
+import org.omg.spec.api4kp._20200801.aspects.Track;
 import org.omg.spec.api4kp._20200801.id.Pointer;
-import org.omg.spec.api4kp._20200801.id.ResourceIdentifier;
 import org.omg.spec.api4kp._20200801.id.SemanticIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,14 +65,20 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   //*********************************************************************************************/
 
 
-  public KnowledgeArtifactRepositoryCore(ArtifactDAO dao,
+  protected KnowledgeArtifactRepositoryCore(ArtifactDAO dao,
+      KnowledgeArtifactRepositoryServerProperties cfg) {
+    init(dao, cfg);
+  }
+
+  @Loggable(beforeCode = "KART-000.A", level = LogLevel.INFO)
+  protected void init(ArtifactDAO dao,
       KnowledgeArtifactRepositoryServerProperties cfg) {
     this.cfg = cfg;
-    hrefBuilder = new HrefBuilder(cfg);
+    hrefBuilder = new HrefBuilder(this.cfg);
     this.dao = dao;
-    this.defaultRepositoryId = cfg
+    this.defaultRepositoryId = this.cfg
         .getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_ID);
-    this.defaultRepositoryName = cfg
+    this.defaultRepositoryName = this.cfg
         .getTyped(KnowledgeArtifactRepositoryOptions.DEFAULT_REPOSITORY_NAME);
   }
 
@@ -83,7 +93,8 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
         descr.withDefaultRepository(defaultRepositoryId.equals(repositoryId)));
   }
 
-  public void shutdown() {
+  @Failsafe
+  public void shutdown() throws DaoRuntimeException {
     dao.shutdown();
   }
 
@@ -92,6 +103,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   //*********************************************************************************************/
 
   @Override
+  @Loggable(beforeCode = "KART-012.A")
   public Answer<List<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository>> listKnowledgeArtifactRepositories() {
     return createRepositoryDescriptor(defaultRepositoryId, defaultRepositoryName)
         .map(descr -> Answer.of(singletonList(descr)))
@@ -99,11 +111,13 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   }
 
   @Override
+  @Loggable(beforeCode = "KART-014.A", level = LogLevel.INFO)
   public Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> initKnowledgeArtifactRepository() {
     return unsupported();
   }
 
   @Override
+  @Loggable(beforeCode = "KART-023.A", level = LogLevel.WARN)
   public Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> setKnowledgeArtifactRepository(
       String repositoryId,
       org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository repositoryDescr) {
@@ -111,19 +125,25 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   }
 
   @Override
+  @Loggable(beforeCode = "KART-021.A")
   public Answer<Void> isKnowledgeArtifactRepository(String repositoryId) {
     return unsupported();
   }
 
   @Override
-  public Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository> getKnowledgeArtifactRepository(
-      String repositoryId) {
-    return Answer.of(defaultRepositoryId.equals(repositoryId)
-        ? createRepositoryDescriptor(repositoryId, defaultRepositoryName)
-        : Optional.empty());
+  @Failsafe(traces = @Track(throwable = RepositoryNotFoundException.class, value = LogLevel.DEBUG))
+  @Loggable(beforeCode = "KART-022.A")
+  public Answer<org.omg.spec.api4kp._20200801.services.repository.KnowledgeArtifactRepository>
+  getKnowledgeArtifactRepository(String repositoryId) {
+    if (defaultRepositoryId.equals(repositoryId)) {
+      return Answer.of(createRepositoryDescriptor(repositoryId, defaultRepositoryName));
+    } else {
+      throw new RepositoryNotFoundException(repositoryId);
+    }
   }
 
   @Override
+  @Loggable(beforeCode = "KART-025.A", level = LogLevel.WARN)
   public Answer<Void> disableKnowledgeArtifactRepository(String repositoryId) {
     return unsupported();
   }
@@ -133,6 +153,8 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   //*********************************************************************************************/
 
   @Override
+  @Failsafe(traces = {@Track(value = LogLevel.WARN, throwable = RepositoryNotFoundException.class)})
+  @Loggable(beforeCode = "KART-032.A", level = LogLevel.INFO)
   public Answer<List<Pointer>> listKnowledgeArtifacts(String repositoryId, Integer offset,
       Integer limit, Boolean deleted) {
     try (DaoResult<List<Artifact>> result = dao
@@ -144,107 +166,84 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
           .collect(Collectors.toList());
 
       return Answer.of(pointers);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
     }
   }
 
   @Override
+  @Failsafe
+  @Loggable(beforeCode = "KART-034.A")
   public Answer<UUID> initKnowledgeArtifact(String repositoryId) {
-    UUID artifactId = UUID.randomUUID();
+    var artifactId = UUID.randomUUID();
 
     try (DaoResult<Artifact> ignored = dao
         .saveResource(repositoryId, artifactId)) {
       return Answer.of(ResponseCodeSeries.Created, artifactId);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
     }
   }
 
   @Override
+  @Loggable(beforeCode = "KART-035.A", level = LogLevel.WARN)
   public Answer<Void> clearKnowledgeRepository(String repositoryId,
       Boolean deleted) {
     return unsupported();
   }
 
   @Override
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.DEBUG))
+  @Loggable(beforeCode = "KART-042.A")
   public Answer<byte[]> getLatestKnowledgeArtifact(String repositoryId, UUID artifactId,
       Boolean deleted) {
     try (DaoResult<ArtifactVersion> result = dao
         .getLatestResourceVersion(repositoryId, artifactId, deleted)) {
       ArtifactVersion version = result.getValue();
       return Answer.of(getData(repositoryId, version));
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
     }
   }
 
   @Override
+  @Failsafe
+  @Loggable(beforeCode = "KART-041.A")
   public Answer<Void> isKnowledgeArtifactSeries(String repositoryId, UUID artifactId,
       Boolean deleted) {
-    try {
-      boolean seriesExist = dao.hasResourceSeries(repositoryId, artifactId).getValue();
-      if (seriesExist) {
-        boolean contentExist = dao.hasResourceVersions(repositoryId, artifactId, deleted)
-            .getValue();
-        if (contentExist) {
-          return Answer.succeed();
-        } else {
-          return Answer.of(NoContent);
-        }
+    boolean seriesExist = dao.hasResourceSeries(repositoryId, artifactId).getValue();
+    if (seriesExist) {
+      boolean contentExist = dao.hasResourceVersions(repositoryId, artifactId, deleted)
+          .getValue();
+      if (contentExist) {
+        return Answer.succeed();
       } else {
-        return Answer.notFound();
+        return Answer.of(NoContent);
       }
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
+    } else {
+      return Answer.notFound();
     }
   }
 
   @Override
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.WARN))
+  @Loggable(beforeCode = "KART-044.A")
   public Answer<Void> enableKnowledgeArtifact(String repositoryId,
       UUID artifactId) {
-    try {
-      dao.enableResourceSeries(repositoryId, artifactId);
-      return Answer.of(ResponseCodeSeries.Created);
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
-    }
+    dao.enableResourceSeries(repositoryId, artifactId);
+    return Answer.of(ResponseCodeSeries.Created);
   }
 
   @Override
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.DEBUG))
+  @Loggable(beforeCode = "KART-045.A", level = LogLevel.INFO)
   public Answer<Void> deleteKnowledgeArtifact(String repositoryId, UUID artifactId,
       Boolean deleted) {
-    try {
-      if ((Boolean.TRUE.equals(deleted))) {
-        dao.removeResourceSeries(repositoryId, artifactId);
-      } else {
-        dao.deleteResourceSeries(repositoryId, artifactId);
-      }
-      return Answer.of(NoContent);
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
+    if ((Boolean.TRUE.equals(deleted))) {
+      dao.removeResourceSeries(repositoryId, artifactId);
+    } else {
+      dao.deleteResourceSeries(repositoryId, artifactId);
     }
+    return Answer.of(NoContent);
   }
 
   @Override
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.DEBUG))
+  @Loggable(beforeCode = "KART-052.A")
   public Answer<List<Pointer>> getKnowledgeArtifactSeries(String repositoryId,
       UUID artifactId, Boolean deleted, Integer offset, Integer limit,
       String beforeTag, String afterTag, String sort) {
@@ -257,30 +256,20 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
           : Answer.of(versions.stream()
               .map(version -> versionToPointer(version, repositoryId))
               .collect(Collectors.toList()));
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
     }
   }
 
   @Override
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.WARN))
+  @Loggable(beforeCode = "KART-054.A")
   public Answer<Void> addKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       byte[] document) {
-    String versionId = UUID.randomUUID().toString();
+    var versionId = UUID.randomUUID().toString();
 
     try (DaoResult<ArtifactVersion> result = dao
         .saveResource(repositoryId, artifactId, versionId, document, emptyMap())) {
       URI location = versionToPointer(result.getValue(), repositoryId).getHref();
       return Answer.referTo(location, true);
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
     }
   }
 
@@ -289,6 +278,8 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   //*********************************************************************************************/
 
   @Override
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.DEBUG))
+  @Loggable(beforeCode = "KART-062.A")
   public Answer<byte[]> getKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
     try (DaoResult<ArtifactVersion> result = dao
@@ -296,114 +287,84 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
       ArtifactVersion version = result.getValue();
 
       return Answer.of(getData(repositoryId, version));
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
     }
   }
 
   @Override
+  @Failsafe
+  @Loggable(beforeCode = "KART-061.A")
   public Answer<Void> isKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
     try (DaoResult<ArtifactVersion> ignored = dao
         .getResourceVersion(repositoryId, artifactId, versionTag, deleted)) {
       return Answer.of(ResponseCodeSeries.OK);
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
-    }
-  }
-
-  public Answer<Void> enableKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
-      String versionTag, Boolean deleted) {
-    try {
-      dao.enableResourceVersion(repositoryId, artifactId, versionTag);
-      return Answer.of(NoContent);
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
     }
   }
 
   @Override
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.WARN))
+  @Loggable(beforeCode = "KART-064.A")
+  public Answer<Void> enableKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
+      String versionTag, Boolean deleted) {
+    dao.enableResourceVersion(repositoryId, artifactId, versionTag);
+    return Answer.of(NoContent);
+  }
+
+  @Override
+  @Failsafe
+  @Loggable(beforeCode = "KART-063.A")
   public Answer<Void> setKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, byte[] document) {
     try (DaoResult<ArtifactVersion> ignored = dao
         .saveResource(repositoryId, artifactId, versionTag, document, emptyMap())) {
 
       return Answer.of(NoContent);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
     }
   }
 
   @Override
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.DEBUG))
+  @Loggable(beforeCode = "KART-065.A")
   public Answer<Void> deleteKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
-    try {
-      if (Boolean.TRUE.equals(deleted)) {
-        dao.removeResourceVersion(repositoryId, artifactId, versionTag);
-      } else {
-        dao.deleteResourceVersion(repositoryId, artifactId, versionTag);
-      }
-      return Answer.of(NoContent);
-    } catch (ResourceNotFoundException rnfe) {
-      logger.warn(rnfe.getMessage());
-      return Answer.failed(rnfe);
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      return Answer.failed(e);
+    if (Boolean.TRUE.equals(deleted)) {
+      dao.removeResourceVersion(repositoryId, artifactId, versionTag);
+    } else {
+      dao.deleteResourceVersion(repositoryId, artifactId, versionTag);
     }
+    return Answer.of(NoContent);
   }
 
 
-  @Override
   /**
-   * Destructor
-   * Release all resources
+   * Destructor Release all resources
    */
+  @Override
+  @Failsafe
+  @Loggable(beforeCode = "KART-900.A")
   public void destroy() {
     dao.shutdown();
   }
 
 
+  @Failsafe
   private Pointer versionToPointer(ArtifactVersion version, String repositoryId) {
-    try {
-      ResourceIdentifier resId = version.getResourceIdentifier();
-      String artifactId = resId.getTag();
-      String versionTag = resId.getVersionTag();
+    var resId = version.getResourceIdentifier();
+    String artifactId = resId.getTag();
+    String versionTag = resId.getVersionTag();
 
-      return SemanticIdentifier.newIdAsPointer(
-          URI.create(cfg.getTyped(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE)),
-          artifactId, "",
-          versionTag, hrefBuilder.getArtifactHref(artifactId, versionTag, repositoryId));
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      throw new ResourceIdentificationException(e);
-    }
+    return SemanticIdentifier.newIdAsPointer(
+        URI.create(cfg.getTyped(KnowledgeArtifactRepositoryOptions.BASE_NAMESPACE)),
+        artifactId, "",
+        versionTag, hrefBuilder.getArtifactHref(artifactId, versionTag, repositoryId));
   }
 
   protected Pointer artifactToPointer(Artifact node, String repositoryId) {
-    try {
-      String artifactId = node.getArtifactTag();
-      Pointer pointer = SemanticIdentifier.newIdAsPointer(artifactId);
-      pointer.withHref(hrefBuilder.getSeriesHref(artifactId, repositoryId));
+    String artifactId = node.getArtifactTag();
+    var pointer = SemanticIdentifier.newIdAsPointer(artifactId);
+    pointer.withHref(hrefBuilder.getSeriesHref(artifactId, repositoryId));
 
-      return pointer;
-    } catch (Exception e) {
-      logger.error(e.getMessage(),e);
-      throw new ResourceIdentificationException(e);
-    }
+    return pointer;
   }
 
   protected byte[] getData(String repositoryId, ArtifactVersion version) {

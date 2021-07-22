@@ -1,5 +1,6 @@
 package edu.mayo.kmdp.repository.artifact.dao;
 
+import edu.mayo.kmdp.repository.artifact.exceptions.DaoRuntimeException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -7,21 +8,23 @@ import java.util.UUID;
 
 public interface ArtifactDAO {
 
-  void shutdown();
+  void shutdown() throws DaoRuntimeException;
 
-  DaoResult<List<Artifact>> listResources(String repositoryId, Boolean deleted, Map<String, String> config);
+  DaoResult<List<Artifact>> listResources(String repositoryId, Boolean deleted,
+      Map<String, String> config);
 
   default DaoResult<List<Artifact>> listResources(String repositoryId, Boolean deleted) {
     return listResources(repositoryId, deleted, Collections.emptyMap());
   }
 
-  DaoResult<ArtifactVersion> getResourceVersion(String repositoryId, UUID artifactId, String versionTag, Boolean deleted);
+  DaoResult<ArtifactVersion> getResourceVersion(String repositoryId, UUID artifactId,
+      String versionTag, Boolean deleted);
 
   DaoResult<Artifact> getResourceSeries(String repositoryId, UUID artifactId);
 
   /**
-   * Returns true if the Artifact Series exist
-   * (regardless of versions and their deletion status)
+   * Returns true if the Artifact Series exist (regardless of versions and their deletion status)
+   *
    * @param repositoryId
    * @param artifactId
    * @return
@@ -29,8 +32,9 @@ public interface ArtifactDAO {
   DaoResult<Boolean> hasResourceSeries(String repositoryId, UUID artifactId);
 
   /**
-   * Returns true if there is at least one version that is available
-   * or (if deleted=true) soft-deleted
+   * Returns true if there is at least one version that is available or (if deleted=true)
+   * soft-deleted
+   *
    * @param repositoryId
    * @param artifactId
    * @param deleted
@@ -38,14 +42,17 @@ public interface ArtifactDAO {
    */
   DaoResult<Boolean> hasResourceVersions(String repositoryId, UUID artifactId, Boolean deleted);
 
-  DaoResult<List<ArtifactVersion>> getResourceVersions(String repositoryId, UUID artifactId, Boolean deleted);
+  DaoResult<List<ArtifactVersion>> getResourceVersions(String repositoryId, UUID artifactId,
+      Boolean deleted);
 
-  DaoResult<ArtifactVersion> getLatestResourceVersion(String repositoryId, UUID artifactId, Boolean deleted);
+  DaoResult<ArtifactVersion> getLatestResourceVersion(String repositoryId, UUID artifactId,
+      Boolean deleted);
 
   void clear();
 
   /**
    * Soft-delete
+   *
    * @param repositoryId
    * @param artifactId
    * @param versionTag
@@ -54,6 +61,7 @@ public interface ArtifactDAO {
 
   /**
    * Hard-delete
+   *
    * @param repositoryId
    * @param artifactId
    * @param versionTag
@@ -76,7 +84,7 @@ public interface ArtifactDAO {
       String repositoryId,
       UUID artifactId, String versionTag,
       byte[] document,
-      Map<String,String> config);
+      Map<String, String> config);
 
   default DaoResult<ArtifactVersion> saveResource(
       String repositoryId,

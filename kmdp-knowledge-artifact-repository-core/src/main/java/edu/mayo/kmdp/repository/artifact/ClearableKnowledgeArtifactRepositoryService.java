@@ -17,7 +17,7 @@ package edu.mayo.kmdp.repository.artifact;
 
 
 /**
- * An extension of {@KnowledgeArtifactRepositoryService} that allows for clearing all content.
+ * An extension of {@link KnowledgeArtifactRepositoryService} that allows for clearing all content.
  */
 public interface ClearableKnowledgeArtifactRepositoryService extends KnowledgeArtifactRepositoryService {
 

@@ -45,7 +45,7 @@ class JPARepositoryConstructionNoSpringTest {
     JPAKnowledgeArtifactRepository jpk =
         (JPAKnowledgeArtifactRepository) inMemoryArtifactRepository(cfg);
     SimpleArtifactVersionRepository repo = (SimpleArtifactVersionRepository) jpk.getPersistenceLayer();
-    EntityManager emRef = repo.emRef;
+    EntityManager emRef = repo.getEMRef();
 
     ArtifactVersionEntity x = new ArtifactVersionEntity(repoId, Util.uuid("xxx"),"1");
     repo.save(x);

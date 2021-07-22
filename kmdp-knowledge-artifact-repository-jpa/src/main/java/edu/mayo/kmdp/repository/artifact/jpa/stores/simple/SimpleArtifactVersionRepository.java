@@ -19,16 +19,13 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.sql.DataSource;
-import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
-import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Static implementation of the internal JPA Artifact Repository interface Should only be used for
@@ -40,12 +37,15 @@ public class SimpleArtifactVersionRepository
     extends SimpleJpaRepository<ArtifactVersionEntity, KeyId>
     implements ArtifactVersionRepository, Closeable {
 
-  public EntityManager emRef;
+  private final EntityManager emRef;
 
   public static SimpleArtifactVersionRepository simpleRepo(
       DataSource ds, KnowledgeArtifactRepositoryServerProperties config) {
     EntityManagerFactory emf = emfProvider(ds, config).getObject();
-    EntityManager em = emf.createEntityManager();
+    if (emf == null) {
+      throw new IllegalStateException("Unable to instantiate test Artifact Repository persistence");
+    }
+    var em = emf.createEntityManager();
     return new SimpleArtifactVersionRepository(em);
   }
 
@@ -62,7 +62,7 @@ public class SimpleArtifactVersionRepository
   public <S extends ArtifactVersionEntity> S save(S entity) {
     EntityTransaction tx = emRef.getTransaction();
     tx.begin();
-    S s = super.save(entity);
+    var s = super.save(entity);
     tx.commit();
     return s;
   }
@@ -288,7 +288,7 @@ public class SimpleArtifactVersionRepository
   private static LocalContainerEntityManagerFactoryBean emfProvider(
       DataSource dataSource,
       KnowledgeArtifactRepositoryServerProperties cfg) {
-    LocalContainerEntityManagerFactoryBean emfb
+    var emfb
         = new LocalContainerEntityManagerFactoryBean();
     emfb.setDataSource(dataSource);
     emfb.setPackagesToScan(
@@ -297,7 +297,7 @@ public class SimpleArtifactVersionRepository
 
     JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
     emfb.setJpaVendorAdapter(vendorAdapter);
-    Properties additionalProps = new Properties();
+    var additionalProps = new Properties();
     if (cfg != null) {
       additionalProps.putAll(additionalProperties(cfg));
     }
@@ -308,24 +308,12 @@ public class SimpleArtifactVersionRepository
     return emfb;
   }
 
-  private static PlatformTransactionManager transactionManager(
-      EntityManagerFactory emf) {
-    JpaTransactionManager transactionManager = new JpaTransactionManager();
-    transactionManager.setEntityManagerFactory(emf);
-
-    return transactionManager;
-  }
-
-  private static PersistenceExceptionTranslationPostProcessor exceptionTranslation() {
-    return new PersistenceExceptionTranslationPostProcessor();
-  }
-
   private static Properties additionalProperties(KnowledgeArtifactRepositoryServerProperties cfg) {
     return additionalProperties(cfg, Properties::getProperty);
   }
 
   private static <T> Properties additionalProperties(T cfg, BiFunction<T, String, String> setter) {
-    Properties properties = new Properties();
+    var properties = new Properties();
     Optional.ofNullable(setter.apply(cfg, "spring.jpa.hibernate.ddl-auto"))
         .ifPresent(v -> properties.setProperty("hibernate.hbm2ddl.auto", v));
     Optional.ofNullable(setter.apply(cfg, "spring.jpa.properties.hibernate.dialect"))
@@ -337,4 +325,7 @@ public class SimpleArtifactVersionRepository
     return properties;
   }
 
+  public EntityManager getEMRef() {
+    return emRef;
+  }
 }

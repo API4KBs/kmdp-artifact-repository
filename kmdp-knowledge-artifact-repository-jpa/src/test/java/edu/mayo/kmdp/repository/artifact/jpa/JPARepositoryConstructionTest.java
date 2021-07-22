@@ -23,7 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = TestJPAConfiguration.class)
 @SpringBootTest(properties = {
     "spring.jpa.show-sql=true",
-    "spring.jpa.hibernate.ddl-auto = create-drop"})
+    "spring.jpa.hibernate.ddl-auto = update"})
 class JPARepositoryConstructionTest {
 
   @Autowired

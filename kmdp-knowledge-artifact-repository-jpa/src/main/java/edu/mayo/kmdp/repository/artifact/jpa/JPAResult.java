@@ -4,7 +4,7 @@ import edu.mayo.kmdp.repository.artifact.dao.DaoResult;
 
 public class JPAResult<T> implements DaoResult<T> {
 
-  private T value;
+  private final T value;
 
   <X extends T> JPAResult(X value) {
     this.value = value;

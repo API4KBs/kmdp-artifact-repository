@@ -8,6 +8,7 @@ import edu.mayo.kmdp.repository.artifact.dao.Artifact;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactDAO;
 import edu.mayo.kmdp.repository.artifact.dao.ArtifactVersion;
 import edu.mayo.kmdp.repository.artifact.dao.DaoResult;
+import edu.mayo.kmdp.repository.artifact.exceptions.DaoRuntimeException;
 import edu.mayo.kmdp.repository.artifact.exceptions.RepositoryNotFoundException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNoContentException;
 import edu.mayo.kmdp.repository.artifact.exceptions.ResourceNotFoundException;
@@ -52,6 +53,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
 
   /**
    * Test constructor
+   *
    * @param source
    * @param cfg
    */
@@ -70,14 +72,14 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown() throws DaoRuntimeException {
     try {
       dataSource.getConnection().close();
       if (versionRepo instanceof Closeable) {
         ((Closeable) versionRepo).close();
       }
-    } catch (SQLException | IOException sqle) {
-      sqle.printStackTrace();
+    } catch (SQLException | IOException e) {
+      throw new DaoRuntimeException(e);
     }
   }
 
@@ -124,7 +126,7 @@ public class JPAArtifactDAO implements ArtifactDAO {
   public DaoResult<Boolean> hasResourceSeries(String repositoryId, UUID artifactId) {
     return ofJPA(
         versionRepo.existsByKey_RepositoryIdAndKey_ArtifactIdAndSeries(
-            repositoryId, artifactId,true));
+            repositoryId, artifactId, true));
   }
 
   @Override
@@ -197,7 +199,8 @@ public class JPAArtifactDAO implements ArtifactDAO {
   @Override
   @Transactional
   public void enableResourceVersion(String repositoryId, UUID artifactId, String versionTag) {
-    ArtifactVersionEntity version = fetchArtifactVersion(repositoryId, artifactId, versionTag, true);
+    ArtifactVersionEntity version = fetchArtifactVersion(repositoryId, artifactId, versionTag,
+        true);
     if (version.isUnavailable()) {
       versionRepo.save(version.withSoftDeleted(false));
     }
@@ -282,12 +285,13 @@ public class JPAArtifactDAO implements ArtifactDAO {
   }
 
 
-  public Optional<ArtifactVersionEntity> tryFetchArtifactSeries(String repositoryId, UUID artifactId) {
+  public Optional<ArtifactVersionEntity> tryFetchArtifactSeries(String repositoryId,
+      UUID artifactId) {
     // no point in pushing the filtering on the deleted flag downstream
     // there is at most one 'series' object per id
     return versionRepo
-            .getFirstByKey_RepositoryIdAndKey_ArtifactIdAndSeries(
-                repositoryId, artifactId, true);
+        .getFirstByKey_RepositoryIdAndKey_ArtifactIdAndSeries(
+            repositoryId, artifactId, true);
   }
 
   public ArtifactVersionEntity fetchArtifactVersion(String repositoryId, UUID artifactId,
@@ -346,19 +350,19 @@ public class JPAArtifactDAO implements ArtifactDAO {
     if (version.isEmpty()) {
       checkAll(repositoryId, artifactId);
     }
-    return version.orElseThrow(() -> new ResourceNotFoundException(artifactId,null,repositoryId));
+    return version.orElseThrow(() -> new ResourceNotFoundException(artifactId, null, repositoryId));
   }
 
 
   private void checkAll(String repositoryId, UUID artifactId) {
-    // throws if neither series nor version associated to the repository (unless default repository)
+    // throws when neither series nor version associated to the repository (unless default repository)
     checkHasRepository(repositoryId);
-    // throws if (series or version) and not deleted exists
+    // throws when (series or version) and not deleted exists
     // (version implies series)
     checkSeriesExist(repositoryId, artifactId);
-    // throws if (series or version) exists
+    // throws when (series or version) exists
     checkSeriesHistory(repositoryId, artifactId);
-    // throws if (no version that is not deleted) exists
+    // throws when (no version that is not deleted) exists
     checkSeriesEmpty(repositoryId, artifactId);
   }
 

@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-@SuppressWarnings("unchecked")
 public class KnowledgeArtifactRepositoryServerProperties extends
     ConfigProperties<KnowledgeArtifactRepositoryServerProperties, KnowledgeArtifactRepositoryServerProperties.KnowledgeArtifactRepositoryOptions> {
 
@@ -89,7 +88,7 @@ public class KnowledgeArtifactRepositoryServerProperties extends
 
     private static final String ID = "default";
 
-    private Opt<KnowledgeArtifactRepositoryOptions> opt;
+    private final Opt<KnowledgeArtifactRepositoryOptions> opt;
 
     KnowledgeArtifactRepositoryOptions(Opt<KnowledgeArtifactRepositoryOptions> opt) {
       this.opt = opt;

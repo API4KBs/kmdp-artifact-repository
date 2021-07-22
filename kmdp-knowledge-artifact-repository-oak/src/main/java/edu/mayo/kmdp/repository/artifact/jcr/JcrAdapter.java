@@ -29,7 +29,7 @@ import org.omg.spec.api4kp._20200801.id.SemanticIdentifier;
 
 public class JcrAdapter implements ArtifactDAO {
 
-  private JcrDao innerDao;
+  private final JcrDao innerDao;
 
   public JcrAdapter(JcrDao dao) {
     this.innerDao = dao;
@@ -52,21 +52,21 @@ public class JcrAdapter implements ArtifactDAO {
   public DaoResult<List<Artifact>> listResources(String repositoryId, Boolean deleted,
       Map<String, String> config) {
     return innerDao.getResources(repositoryId, deleted, config)
-        .map(nodes -> mapAll(nodes,this::toArtifact));
+        .map(nodes -> mapAll(nodes, this::toArtifact));
   }
 
 
   @Override
   public DaoResult<ArtifactVersion> getResourceVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
-    return innerDao.getResource(repositoryId,artifactId, versionTag, deleted)
+    return innerDao.getResource(repositoryId, artifactId, versionTag, deleted)
         .map(this::toArtifactVersion);
   }
 
   @Override
   public DaoResult<Boolean> hasResourceSeries(String repositoryId, UUID artifactId) {
     return innerDao.getResources(repositoryId, true, Collections.emptyMap())
-        .map(nodes -> mapAll(nodes,this::toArtifact)
+        .map(nodes -> mapAll(nodes, this::toArtifact)
             .stream().anyMatch(x -> x.getArtifactId().equals(artifactId)));
   }
 
@@ -76,9 +76,10 @@ public class JcrAdapter implements ArtifactDAO {
   }
 
   @Override
-  public DaoResult<Boolean> hasResourceVersions(String repositoryId, UUID artifactId, Boolean deleted) {
+  public DaoResult<Boolean> hasResourceVersions(String repositoryId, UUID artifactId,
+      Boolean deleted) {
     return innerDao.getResourceVersions(repositoryId, artifactId, deleted)
-        .map(l -> ! l.isEmpty());
+        .map(l -> !l.isEmpty());
   }
 
   @Override
@@ -117,7 +118,7 @@ public class JcrAdapter implements ArtifactDAO {
 
   @Override
   public void enableResourceSeries(String repositoryId, UUID artifactId) {
-    innerDao.enableResource(repositoryId,artifactId);
+    innerDao.enableResource(repositoryId, artifactId);
   }
 
   @Override
@@ -153,14 +154,15 @@ public class JcrAdapter implements ArtifactDAO {
     return new NodeAdapter(node);
   }
 
-  private <X,T> List<X> mapAll(List<T> source, Function<T,X> mapper) {
+  private <X, T> List<X> mapAll(List<T> source, Function<T, X> mapper) {
     return source.stream()
         .map(mapper)
         .collect(Collectors.toList());
   }
 
   public static class VersionAdapter implements ArtifactVersion {
-    private Version version;
+
+    private final Version version;
 
     public VersionAdapter(Version version) {
       this.version = version;
@@ -173,20 +175,21 @@ public class JcrAdapter implements ArtifactDAO {
     @Override
     public ResourceIdentifier getResourceIdentifier() {
       try {
-        String artifactId = version.getFrozenNode().getProperty("jcr:id").getString();
-        String versionTag = version.getContainingHistory().getVersionLabels(version)[0];
-        return SemanticIdentifier.newId(artifactId,versionTag);
+        var artifactId = version.getFrozenNode().getProperty("jcr:id").getString();
+        var versionTag = version.getContainingHistory().getVersionLabels(version)[0];
+        return SemanticIdentifier.newId(artifactId, versionTag);
       } catch (RepositoryException e) {
-        throw new IllegalStateException(e.getMessage(),e);
+        throw new IllegalStateException(e.getMessage(), e);
       }
     }
 
     @Override
     public boolean isUnavailable() throws DaoRuntimeException {
       try {
-        return STATUS_UNAVAILABLE.equals(version.getFrozenNode().getProperty(JCR_STATUS).getString());
+        return STATUS_UNAVAILABLE
+            .equals(version.getFrozenNode().getProperty(JCR_STATUS).getString());
       } catch (RepositoryException e) {
-        throw new DaoRuntimeException(e.getMessage(),e);
+        throw new DaoRuntimeException(e.getMessage(), e);
       }
     }
 
@@ -195,13 +198,13 @@ public class JcrAdapter implements ArtifactDAO {
       try {
         return STATUS_AVAILABLE.equals(version.getFrozenNode().getProperty(JCR_STATUS).getString());
       } catch (RepositoryException e) {
-        throw new DaoRuntimeException(e.getMessage(),e);
+        throw new DaoRuntimeException(e.getMessage(), e);
       }
     }
 
     @Override
     public InputStream getDataStream() throws DaoRuntimeException {
-      Node node = null;
+      Node node;
       try {
         node = getJCRVersion().getFrozenNode();
         return node.getProperty(JCR_DATA).getBinary().getStream();
@@ -212,14 +215,11 @@ public class JcrAdapter implements ArtifactDAO {
   }
 
   public static class NodeAdapter implements Artifact {
-    private Node node;
+
+    private final Node node;
 
     public NodeAdapter(Node node) {
       this.node = node;
-    }
-
-    public Node getJCRNode() {
-      return node;
     }
 
     @Override
@@ -227,7 +227,7 @@ public class JcrAdapter implements ArtifactDAO {
       try {
         return node.getProperty(JCR_ID).getString();
       } catch (RepositoryException e) {
-        throw new IllegalStateException(e.getMessage(),e);
+        throw new IllegalStateException(e.getMessage(), e);
       }
     }
 
