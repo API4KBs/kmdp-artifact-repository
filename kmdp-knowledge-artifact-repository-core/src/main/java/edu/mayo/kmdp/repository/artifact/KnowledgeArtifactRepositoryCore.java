@@ -278,7 +278,7 @@ public abstract class KnowledgeArtifactRepositoryCore implements DisposableBean,
   //*********************************************************************************************/
 
   @Override
-  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.DEBUG))
+  @Failsafe(traces = @Track(throwable = ResourceNotFoundException.class, value = LogLevel.TRACE))
   @Loggable(beforeCode = "KART-062.A")
   public Answer<byte[]> getKnowledgeArtifactVersion(String repositoryId, UUID artifactId,
       String versionTag, Boolean deleted) {
